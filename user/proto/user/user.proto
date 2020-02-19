@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package fullbottle.srv.user;
+
+service UserService {
+    rpc GetUserInfo(GetUserRequest) returns (GetUserResponse) {}
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc ModifyUser(ModifyUserRequest) returns (ModifyUserResponse) {}
+    rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {}
+}
+
+message GetUserRequest {
+    int64 id = 1;
+}
+
+message GetUserResponse {
+    int32 code = 1;
+    string msg = 2;
+    UserInfo info = 3;
+}
+
+message CreateUserRequest {
+    UserVar var = 1;
+}
+
+message CreateUserResponse {
+    int32 code = 1;
+    string msg = 2;
+    UserInfo info = 3;
+}
+
+message ModifyUserRequest {
+    int64 id = 1;
+    UserVar var = 2;
+}
+
+message ModifyUserResponse {
+    int32 code = 1;
+    string msg = 2;
+}
+
+message UserLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message UserLoginResponse {
+    int64 code = 1;
+    string msg = 2;
+    string token = 3;
+    int64 expire = 4;
+}
+
+message UserInfo {
+    int64 id = 1;
+    string username = 2;
+    string password = 3;
+    string email = 4;
+    int32 role = 5;
+    string avatarUri = 6;
+    int32 status = 7;
+    int64 createTime = 8;
+    int64 updateTime = 9;
+    int64 deleteTime = 10;
+}
+
+message UserVar {
+    string username = 2;
+    string password = 3;
+    string email = 4;
+    int32 role = 5;
+    string avatarUri = 6;
+}

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package fullbottle.srv.auth;
+
+service AuthService {
+    rpc GenerateJwtToken(GenerateJwtTokenRequest) returns (GenerateJwtTokenResponse) {}
+    rpc ParseJwtToken(ParseJwtTokenRequest) returns (ParseJwtTokenResponse) {}
+}
+
+message GenerateJwtTokenRequest {
+    int64 userId = 1;
+    int64 expire = 2;
+}
+
+message GenerateJwtTokenResponse {
+    int64 code = 1;
+    string msg = 2;
+    string token = 3;
+}
+
+message ParseJwtTokenRequest {
+    string token = 1;
+}
+
+message ParseJwtTokenResponse {
+    int64 code = 1;
+    string msg = 2;
+    int64 userId = 3;
+}

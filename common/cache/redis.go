@@ -8,11 +8,11 @@ import (
 var client *redis.Client
 
 func init() {
-	conf := config.GetConfigMap("redis")
+	conf := config.GetConfig().Redis
 
 	client = redis.NewClient(&redis.Options{
-		Addr:     conf["url"],
-		Password: conf["password"],
+		Addr:     conf.URL,
+		Password: conf.Password,
 		DB:       0,
 	})
 }

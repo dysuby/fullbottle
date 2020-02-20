@@ -2,8 +2,10 @@ package main
 
 import (
 	"FullBottle/auth/handler"
+	"FullBottle/common"
+	"FullBottle/config"
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/util/log"
+	"FullBottle/common/log"
 
 	auth "FullBottle/auth/proto/auth"
 )
@@ -11,8 +13,10 @@ import (
 func main() {
 	// New Service
 	service := micro.NewService(
-		micro.Name("fullbottle.srv.auth"),
+		micro.Name(config.AuthSrvName),
 		micro.Version("latest"),
+		micro.WrapHandler(common.ServiceErrorRecovery),
+		micro.WrapHandler(common.ServiceLogWrapper),
 	)
 
 	// Initialise service
@@ -20,11 +24,11 @@ func main() {
 
 	// Register Handler
 	if err := auth.RegisterAuthServiceHandler(service.Server(), new(handler.AuthHandler)); err != nil {
-		log.Fatal(err)
+		log.Fatalf(err, "RegisterAuthServiceHandler failed")
 	}
 
 	// Run service
 	if err := service.Run(); err != nil {
-		log.Fatal(err)
+		log.Fatalf(err, "Service running failed")
 	}
 }

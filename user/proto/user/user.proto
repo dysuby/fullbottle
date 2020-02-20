@@ -14,44 +14,6 @@ message GetUserRequest {
 }
 
 message GetUserResponse {
-    int32 code = 1;
-    string msg = 2;
-    UserInfo info = 3;
-}
-
-message CreateUserRequest {
-    UserVar var = 1;
-}
-
-message CreateUserResponse {
-    int32 code = 1;
-    string msg = 2;
-    UserInfo info = 3;
-}
-
-message ModifyUserRequest {
-    int64 id = 1;
-    UserVar var = 2;
-}
-
-message ModifyUserResponse {
-    int32 code = 1;
-    string msg = 2;
-}
-
-message UserLoginRequest {
-    string email = 1;
-    string password = 2;
-}
-
-message UserLoginResponse {
-    int64 code = 1;
-    string msg = 2;
-    string token = 3;
-    int64 expire = 4;
-}
-
-message UserInfo {
     int64 id = 1;
     string username = 2;
     string password = 3;
@@ -64,10 +26,33 @@ message UserInfo {
     int64 deleteTime = 10;
 }
 
-message UserVar {
+message CreateUserRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+}
+
+message CreateUserResponse {
+
+}
+
+message ModifyUserRequest {
+    int64 id = 1;
     string username = 2;
     string password = 3;
-    string email = 4;
-    int32 role = 5;
-    string avatarUri = 6;
+    string avatarUri = 5;
+}
+
+message ModifyUserResponse {
+
+}
+
+message UserLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message UserLoginResponse {
+    string token = 1;
+    int64 expire = 2;
 }

@@ -9,10 +9,6 @@ import (
 	"net/http"
 )
 
-func GetWeedFilerUrl() string {
-	return config.GetSingleConfig("weed", "filer")
-}
-
 func GenFilePath(path string, filename string) string {
 	return fmt.Sprintf("/%s/%s", path, filename)
 }
@@ -31,8 +27,8 @@ func UploadFile(file multipart.File, filename string, path string) (resp *http.R
 
 	_ = w.Close()
 
-	url := GetWeedFilerUrl() + GenFilePath(path, filename)
-	req, err := http.NewRequest("POST",url, &b)
+	url := config.GetConfig().Weed.Filer + GenFilePath(path, filename)
+	req, err := http.NewRequest("POST", url, &b)
 	if err != nil {
 		return
 	}

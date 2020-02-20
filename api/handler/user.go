@@ -3,9 +3,11 @@ package handler
 import (
 	"FullBottle/api/utils"
 	"FullBottle/common"
+	"FullBottle/config"
 	"FullBottle/models"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/micro/go-micro/v2/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -13,14 +15,12 @@ import (
 	PbUser "FullBottle/user/proto/user"
 )
 
-const AvatarMaxSize = 2 * (1 << 20)  // 2mb
-
 func GetUser(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
 
-	info := u.(PbUser.UserInfo)
+	user := u.(*models.User)
 
-	if info.Status == models.INVALID {
+	if user.Status == models.INVALID {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"msg": "Invalid user",
 		})
@@ -30,12 +30,12 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "Success",
 		"user": gin.H{
-			"id":          info.Id,
-			"status":      info.Status,
-			"username":    info.Username,
-			"email":       info.Email,
-			"avatar_uri":  info.AvatarUri,
-			"create_time": info.CreateTime,
+			"id":          user.ID,
+			"status":      user.Status,
+			"username":    user.Username,
+			"email":       user.Email,
+			"avatar_uri":  user.AvatarUri,
+			"create_time": user.CreateTime.Unix(),
 		},
 	})
 }
@@ -54,29 +54,23 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.CreateUser(c, &PbUser.CreateUserRequest{
-		Var: &PbUser.UserVar{
-			Email:    req.Email,
-			Username: req.Username,
-			Password: req.Password,
-		},
+	_, err := client.CreateUser(c, &PbUser.CreateUserRequest{
+		Email:    req.Email,
+		Username: req.Username,
+		Password: req.Password,
 	})
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
-	}
+		e := errors.Parse(err.Error())
+		if e.Code == common.EmailExisted {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"msg": "Email existed",
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"msg": e.Detail,
+			})
+		}
 
-	if resp.Code == common.EmailExisted {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Email existed",
-		})
-		return
-	} else if resp.Code != common.Success {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": resp.Msg,
-		})
 		return
 	}
 
@@ -87,12 +81,12 @@ func RegisterUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
-	info := u.(PbUser.UserInfo)
-	uid := info.Id
+	user := u.(*models.User)
+	uid := user.ID
 
 	req := struct {
 		Username string `json:"username" binding:"required,max=24,min=4"`
-		Password string `json:"password" binding:"required,max=18,min:6"`
+		Password string `json:"password" binding:"required,max=18,min=6"`
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -102,29 +96,23 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.ModifyUser(c, &PbUser.ModifyUserRequest{
-		Id: int64(uid),
-		Var: &PbUser.UserVar{
-			Username: req.Username,
-			Password: req.Password,
-		},
+	_, err := client.ModifyUser(c, &PbUser.ModifyUserRequest{
+		Id:       int64(uid),
+		Username: req.Username,
+		Password: req.Password,
 	})
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
-	}
+		e := errors.Parse(err.Error())
+		if e.Code == common.UserNotFound {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"msg": e.Detail,
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"msg": e.Detail,
+			})
+		}
 
-	if resp.Code == common.UserNotFound {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"msg": resp.Msg,
-		})
-		return
-	} else if resp.Code != common.Success {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": resp.Msg,
-		})
 		return
 	}
 
@@ -133,10 +121,10 @@ func UpdateUser(c *gin.Context) {
 	})
 }
 
-func UploadAvatar(c *gin.Context)  {
+func UploadAvatar(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
-	info := u.(PbUser.UserInfo)
-	uid := info.Id
+	user := u.(*models.User)
+	uid := user.ID
 
 	f, header, err := c.Request.FormFile("avatar")
 	if err != nil {
@@ -145,7 +133,7 @@ func UploadAvatar(c *gin.Context)  {
 		})
 		return
 	}
-	if header.Size > AvatarMaxSize {
+	if header.Size > config.AvatarMaxSize {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "image size cannot exceed 2MB",
 		})
@@ -185,28 +173,22 @@ func UploadAvatar(c *gin.Context)  {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.ModifyUser(c, &PbUser.ModifyUserRequest{
-		Id: int64(uid),
-		Var: &PbUser.UserVar{
-			AvatarUri: utils.GenFilePath("__avatar__", avatarName),
-		},
+	_, err = client.ModifyUser(c, &PbUser.ModifyUserRequest{
+		Id:        int64(uid),
+		AvatarUri: utils.GenFilePath("__avatar__", avatarName),
 	})
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
-	}
+		e := errors.Parse(err.Error())
+		if e.Code == common.UserNotFound {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"msg": e.Detail,
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"msg": e.Detail,
+			})
+		}
 
-	if resp.Code == common.UserNotFound {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"msg": resp.Msg,
-		})
-		return
-	} else if resp.Code != common.Success {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": resp.Msg,
-		})
 		return
 	}
 
@@ -228,28 +210,24 @@ func UserLogin(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.UserLogin(c, &PbUser.UserLoginRequest{Email: req.Email, Password:req.Password})
+	resp, err := client.UserLogin(c, &PbUser.UserLoginRequest{Email: req.Email, Password: req.Password})
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
-	}
+		e := errors.Parse(err.Error())
+		if e.Code == common.EmailExisted {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"msg": e.Detail,
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"msg": e.Detail,
+			})
+		}
 
-	if resp.Code == common.UserNotFound {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"msg": resp.Msg,
-		})
-		return
-	} else if resp.Code != common.Success {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"msg": resp.Msg,
-		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":   "Success",
 		"token": resp.Token,
 	})
 }

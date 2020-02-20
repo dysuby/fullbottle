@@ -1,10 +1,9 @@
 package common
 
-const (
-	Success = 1000 + iota
+import "github.com/micro/go-micro/v2/errors"
 
-	UserNotFound
-	ArgumentError
+const (
+	UserNotFound = 1000 + iota
 	EmailExisted
 	JwtError
 	PasswordError
@@ -12,3 +11,7 @@ const (
 	DBConnError
 	InternalError
 )
+
+func NewDBError(name string, err error) error {
+	return errors.New(name, "Mysql Error: "+err.Error(), DBConnError)
+}

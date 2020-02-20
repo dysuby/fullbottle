@@ -1,25 +1,45 @@
 package config
 
 import (
+	"FullBottle/common/log"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/env"
-	"github.com/micro/go-micro/v2/util/log"
 )
 
-var conf config.Config
+type Config struct {
+	Mysql struct {
+		URL      string
+		User     string
+		Password string
+		Database string
+	}
 
-func init() {
-	var err error
-	conf, err = config.NewConfig(config.WithSource(env.NewSource()))
-	if err != nil {
-		log.Fatal(err)
+	Redis struct {
+		URL      string
+		Password string
+	}
+
+	App struct {
+		Secret string
+	}
+
+	Weed struct {
+		Filer string
 	}
 }
 
-func GetSingleConfig(fields ...string) string {
-	return conf.Get(fields...).String("")
+var conf Config
+
+func init() {
+	c, err := config.NewConfig(config.WithSource(env.NewSource()))
+	if err != nil {
+		log.Fatalf(err, "Cannot load config")
+	}
+	if err = c.Scan(&conf); err != nil {
+		log.Fatalf(err, "Config format error")
+	}
 }
 
-func GetConfigMap(fields ...string) map[string]string {
-	return conf.Get(fields...).StringMap(map[string]string{})
+func GetConfig() Config {
+	return conf
 }

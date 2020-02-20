@@ -13,9 +13,7 @@ message GenerateJwtTokenRequest {
 }
 
 message GenerateJwtTokenResponse {
-    int64 code = 1;
-    string msg = 2;
-    string token = 3;
+    string token = 1;
 }
 
 message ParseJwtTokenRequest {
@@ -23,7 +21,5 @@ message ParseJwtTokenRequest {
 }
 
 message ParseJwtTokenResponse {
-    int64 code = 1;
-    string msg = 2;
-    int64 userId = 3;
+    int64 userId = 1;
 }

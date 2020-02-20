@@ -6,16 +6,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/micro/go-micro/v2/util/log"
+	"github.com/micro/go-micro/v2/errors"
+	"FullBottle/common/log"
 	"strconv"
 	"time"
 
 	pb "FullBottle/auth/proto/auth"
 )
 
-var AppSecret = config.GetSingleConfig("app", "secret")
-var AppIss = "github.com/vegchic/FullBottle"
-
+var AppSecret = config.GetConfig().App.Secret
 
 type AuthHandler struct{}
 
@@ -25,19 +24,17 @@ func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtT
 		ExpiresAt: expireTime,
 		IssuedAt:  time.Now().Unix(),
 		Id:        fmt.Sprintf("%d", req.GetUserId()),
-		Issuer:    AppIss,
+		Issuer:    config.AppIss,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	signed, err := token.SignedString([]byte(AppSecret))
 	if err != nil {
-		resp.Code, resp.Msg = common.JwtError, "Signing token failed"
-		log.Fatal(err)
-
+		return errors.New(config.AuthSrvName, "Signing token failed", common.JwtError)
 	}
+
 	resp.Token = signed
-	resp.Code, resp.Msg = common.Success, "Success"
 	return nil
 }
 
@@ -47,23 +44,19 @@ func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRe
 		return []byte(AppSecret), nil
 	})
 	if err != nil {
-		resp.Code, resp.Msg = common.JwtError, err.Error()
-		return nil
+		return errors.New(config.AuthSrvName, "Parsing claims failed", common.JwtError)
 	}
 
 	if !token.Valid {
-		resp.Code, resp.Msg = common.JwtError, "Invalid token"
-		return nil
+		return errors.New(config.AuthSrvName, "Invalid jwt token", common.JwtError)
 	}
 
 	uid, err := strconv.Atoi(claims.Id)
 	if err != nil {
-		log.Info(err)
-		resp.Code, resp.Msg = common.InternalError, "Invalid token"
-		return nil
+		log.Errorf(err, "Claims format error: %v", token)
+		return errors.New(config.AuthSrvName, "Claims format error", common.InternalError)
 	}
 
 	resp.UserId = int64(uid)
-	resp.Code, resp.Msg = common.Success, "Success"
 	return nil
 }

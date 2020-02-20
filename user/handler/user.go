@@ -3,15 +3,15 @@ package handler
 import (
 	pbAuth "FullBottle/auth/proto/auth"
 	"FullBottle/common"
+	"FullBottle/config"
 	"FullBottle/models"
 	"FullBottle/user/dao"
 	pb "FullBottle/user/proto/user"
 	"FullBottle/user/util"
 	"context"
-	"github.com/micro/go-micro/v2/util/log"
+	"github.com/micro/go-micro/v2/errors"
+	"FullBottle/common/log"
 )
-
-const JwtTokenExpire = int64(60 * 60 * 24)
 
 type UserHandler struct{}
 
@@ -19,13 +19,11 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 	uid := req.GetId()
 	result, err := dao.GetUsersByQuery(models.Fields{"id": uid})
 	if err != nil {
-		log.Error(err)
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	}
 	if len(result) == 0 {
-		resp.Code, resp.Msg = common.UserNotFound, "User not found"
-		return nil
+		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
 	}
 
 	user := result[0]
@@ -35,75 +33,61 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 		deleteTime = user.DeleteTime.Unix()
 	}
 
-	resp.Info = &pb.UserInfo{
-		Id:         int64(user.ID),
-		Username:   user.Username,
-		Email:      user.Email,
-		Role:       user.Role,
-		AvatarUri:  user.AvatarUri,
-		Status:     user.Status,
-		CreateTime: user.CreateTime.Unix(),
-		UpdateTime: user.UpdateTime.Unix(),
-		DeleteTime: deleteTime,
-	}
-
-	resp.Code, resp.Msg = common.Success, "Success"
+	resp.Id = int64(user.ID)
+	resp.Username = user.Username
+	resp.Email = user.Email
+	resp.Role = user.Role
+	resp.AvatarUri = user.AvatarUri
+	resp.Status = user.Status
+	resp.CreateTime = user.CreateTime.Unix()
+	resp.UpdateTime = user.UpdateTime.Unix()
+	resp.DeleteTime = deleteTime
 
 	return nil
 }
 
 func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest, resp *pb.CreateUserResponse) error {
-	info := req.GetVar()
-
-	rows, err := dao.GetUsersByQuery(models.Fields{"email": info.Email})
+	rows, err := dao.GetUsersByQuery(models.Fields{"email": req.Email})
 	if err != nil {
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	} else if len(rows) > 0 {
-		resp.Code, resp.Msg = common.EmailExisted, "Email existed"
-		return nil
+		return errors.New(config.UserSrvName, "Email existed", common.EmailExisted)
 	}
 
 	user := models.User{
-		Email:     info.Email,
-		Username:  info.Username,
-		Password:  util.PasswordCrypto(info.Password),
-		Role:      info.Role,
-		AvatarUri: info.AvatarUri,
+		Email:    req.Email,
+		Username: req.Username,
+		Password: util.PasswordCrypto(req.Password),
 	}
+
 	err = dao.CreateUser(&user)
 
 	if err != nil {
-		log.Error(err)
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	}
 
-	resp.Code, resp.Msg = common.Success, "Success"
 	return nil
 }
 
 func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest, resp *pb.ModifyUserResponse) error {
-	info := req.GetVar()
 	uid := req.GetId()
 
 	rows, err := dao.GetUsersByQuery(models.Fields{"id": uid})
 	if err != nil {
-		log.Error(err)
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	}
 
 	if len(rows) == 0 {
-		resp.Code, resp.Msg = common.UserNotFound, "User not found"
-		return nil
+		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
 	}
 
 	fields := models.Fields{
-		"username":   info.Username,
-		"password":   util.PasswordCrypto(info.Password),
-		"avatar_uri": info.AvatarUri,
-		"role":       info.Role,
+		"username":   req.Username,
+		"password":   util.PasswordCrypto(req.Password),
+		"avatar_uri": req.AvatarUri,
 	}
 
 	basicUser := models.User{}
@@ -111,12 +95,10 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 	err = dao.UpdateUser(&basicUser, fields)
 
 	if err != nil {
-		log.Error(err)
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	}
 
-	resp.Code, resp.Msg = common.Success, "Success"
 	return nil
 }
 
@@ -124,32 +106,27 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 	email := req.GetEmail()
 	result, err := dao.GetUsersByQuery(models.Fields{"email": email})
 	if err != nil {
-		log.Error(err)
-		resp.Code, resp.Msg = common.DBConnError, "DB error"
-		return nil
+		log.Errorf(err, "DB error")
+		return common.NewDBError(config.UserSrvName, err)
 	}
 	if len(result) == 0 {
-		resp.Code, resp.Msg = common.UserNotFound, "User not found"
-		return nil
+		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
 	}
 
 	user := result[0]
 	if pass := util.ComparePassword(user.Password, req.Password); !pass {
-		resp.Code, resp.Msg = common.PasswordError, "Password error"
-		return nil
+		return errors.New(config.UserSrvName, "Password error", common.PasswordError)
 	}
 
 	authClient := common.GetAuthSrvClient()
 	authResp, err := authClient.GenerateJwtToken(ctx, &pbAuth.GenerateJwtTokenRequest{
-		UserId:user.ID,
-		Expire:JwtTokenExpire,
+		UserId: user.ID,
+		Expire: config.JwtTokenExpire,
 	})
-	if err != nil || authResp.Code != common.Success {
-		resp.Code, resp.Msg = common.JwtError, "Cannot generate jwt token"
-		return nil
+	if err != nil {
+		return err
 	}
 
-	resp.Code, resp.Msg = common.Success, "Success"
-	resp.Token, resp.Expire = authResp.GetToken(), JwtTokenExpire
+	resp.Token, resp.Expire = authResp.GetToken(), config.JwtTokenExpire
 	return nil
 }

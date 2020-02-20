@@ -19,42 +19,27 @@ services:
       - "8600:8600/udp"
     command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0"
 
-#  gateway:
-#      command: --registry_address=consul-server-bootstrap:8500  api
-#      image: microhq/micro
-#      depends_on:
-#        - api
-#      ports:
-#        - '8080:8080'
   api:
     build: ./api
-    command: --registry_address=consul-server-bootstrap:8500 --server_address=0.0.0.0:8080
+    command: --registry_address=consul-server-bootstrap:8500 --server_address=0.0.0.0:8000
     env_file:
       - .env
     depends_on:
       - user-service
     ports:
-      - "8080:8080"
+      - "8000:8000"
 
-  user-service:
+  user-service: &service
     build: ./user
     command: --registry_address=consul-server-bootstrap:8500
     env_file:
       - .env
     depends_on:
       - mysql
-    ports:
-      - "8081:8080"
 
   auth-service:
+    <<: *service
     build: ./auth
-    command: --registry_address=consul-server-bootstrap:8500
-    env_file:
-      - .env
-    depends_on:
-      - mysql
-    ports:
-      - "8082:8080"
 
   mysql:
     image: mysql

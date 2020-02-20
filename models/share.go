@@ -23,7 +23,7 @@ type ShareToken struct {
 
 type ShareRef struct {
 	BasicModel
-	TokenID    int		  `gorm:"not null"`
-	ObjectType int        `gorm:"not null"`
-	ObjectID   int        `gorm:"not null"`
+	TokenID    int `gorm:"not null"`
+	ObjectType int `gorm:"not null"`
+	ObjectID   int `gorm:"not null"`
 }

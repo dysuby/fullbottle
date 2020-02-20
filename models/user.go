@@ -13,4 +13,3 @@ type User struct {
 	Role      int32  `gorm:"type:smallint;not null;default:1"`
 	AvatarUri string `gorm:"type:varchar(64);not null"`
 }
-

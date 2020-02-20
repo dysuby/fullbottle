@@ -1,11 +1,11 @@
 package models
 
 import (
+	"FullBottle/common/log"
 	"FullBottle/config"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"FullBottle/common/log"
 )
 
 var db *gorm.DB

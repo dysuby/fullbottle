@@ -14,7 +14,7 @@ import (
 )
 
 func LoginRequired() gin.HandlerFunc {
-	return func (c *gin.Context) {
+	return func(c *gin.Context) {
 		// validate jwt token
 		authClient := common.GetAuthSrvClient()
 		authorization := c.GetHeader("authorization")
@@ -67,7 +67,7 @@ func LoginRequired() gin.HandlerFunc {
 			Password:  userResp.Password,
 			Email:     userResp.Email,
 			Role:      userResp.Role,
-			AvatarUri: userResp.AvatarUri,
+			AvatarUrl: userResp.AvatarUrl,
 		})
 	}
 }

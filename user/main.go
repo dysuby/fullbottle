@@ -2,10 +2,10 @@ package main
 
 import (
 	"FullBottle/common"
+	"FullBottle/common/log"
 	"FullBottle/config"
 	"FullBottle/user/handler"
 	"github.com/micro/go-micro/v2"
-	"FullBottle/common/log"
 
 	user "FullBottle/user/proto/user"
 )

@@ -11,5 +11,5 @@ type User struct {
 	Password  string `gorm:"type:varchar(128);not null"`
 	Email     string `gorm:"type:varchar(128);not null"`
 	Role      int32  `gorm:"type:smallint;not null;default:1"`
-	AvatarUri string `gorm:"type:varchar(64);not null"`
+	AvatarUrl string `gorm:"type:varchar(64);not null"`
 }

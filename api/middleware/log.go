@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"FullBottle/common/log"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	"time"
-	"FullBottle/common/log"
 )
 
 func ApiLogWrapper() gin.HandlerFunc {
@@ -17,16 +17,16 @@ func ApiLogWrapper() gin.HandlerFunc {
 			log.Fatalf(err, "Failed to generate UUID")
 		}
 		log.WithFields(logrus.Fields{
-			"uuid": u.String(),
+			"uuid":     u.String(),
 			"clientIP": c.ClientIP(),
 		}).Infof("[%s] %s ", c.Request.Method, c.Request.URL.String())
 
 		c.Next()
 
 		log.WithFields(logrus.Fields{
-			"uuid": u.String(),
+			"uuid":     u.String(),
 			"clientIP": c.ClientIP(),
-			"cost": (time.Now().UnixNano() - s.UnixNano()) / 1e6,
+			"cost":     (time.Now().UnixNano() - s.UnixNano()) / 1e6,
 		}).Infof("%d ", c.Writer.Status())
 	}
 }

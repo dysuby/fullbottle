@@ -3,9 +3,9 @@ package main
 import (
 	"FullBottle/auth/handler"
 	"FullBottle/common"
+	"FullBottle/common/log"
 	"FullBottle/config"
 	"github.com/micro/go-micro/v2"
-	"FullBottle/common/log"
 
 	auth "FullBottle/auth/proto/auth"
 )

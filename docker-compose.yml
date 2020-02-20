@@ -73,13 +73,11 @@ services:
     image: chrislusf/seaweedfs
     restart: always
     ports:
-      - "8888:8888"
-      - "18888:18888"
       - "9333:9333"
-    command: server -dir="/data" -filer=true
+      - "8080:8080"
+    command: server -dir="/data"
     volumes:
       - ./fs/data:/data
-      - ./fs/filer.toml:/etc/seaweedfs/filer.toml
     depends_on:
       - registrator
 

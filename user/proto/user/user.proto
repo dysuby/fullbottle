@@ -19,7 +19,7 @@ message GetUserResponse {
     string password = 3;
     string email = 4;
     int32 role = 5;
-    string avatarUri = 6;
+    string avatarUrl = 6;
     int32 status = 7;
     int64 createTime = 8;
     int64 updateTime = 9;
@@ -40,7 +40,7 @@ message ModifyUserRequest {
     int64 id = 1;
     string username = 2;
     string password = 3;
-    string avatarUri = 5;
+    string avatarUrl = 4;
 }
 
 message ModifyUserResponse {

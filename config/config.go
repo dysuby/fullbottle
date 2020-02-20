@@ -24,7 +24,7 @@ type Config struct {
 	}
 
 	Weed struct {
-		Filer string
+		Master string
 	}
 }
 

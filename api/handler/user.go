@@ -34,7 +34,7 @@ func GetUser(c *gin.Context) {
 			"status":      user.Status,
 			"username":    user.Username,
 			"email":       user.Email,
-			"avatar_uri":  user.AvatarUri,
+			"avatar_url":  user.AvatarUrl,
 			"create_time": user.CreateTime.Unix(),
 		},
 	})
@@ -48,7 +48,7 @@ func RegisterUser(c *gin.Context) {
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": err.Error(),
+			"msg": "Arguments parse error: " + err.Error(),
 		})
 		return
 	}
@@ -90,7 +90,7 @@ func UpdateUser(c *gin.Context) {
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": err.Error(),
+			"msg": "Arguments parse error: " + err.Error(),
 		})
 		return
 	}
@@ -164,7 +164,7 @@ func UploadAvatar(c *gin.Context) {
 	}
 
 	avatarName := fmt.Sprintf("%d-%d", uid, time.Now().Unix())
-	_, err = utils.UploadFile(f, avatarName, "__avatar__")
+	fileInfo, err := utils.UploadFile(f, avatarName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Error appears when uploading image: " + err.Error(),
@@ -175,7 +175,7 @@ func UploadAvatar(c *gin.Context) {
 	client := common.GetUserSrvClient()
 	_, err = client.ModifyUser(c, &PbUser.ModifyUserRequest{
 		Id:        int64(uid),
-		AvatarUri: utils.GenFilePath("__avatar__", avatarName),
+		AvatarUrl: utils.JoinUrl(fileInfo.Url, fileInfo.Fid),
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())

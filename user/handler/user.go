@@ -3,6 +3,7 @@ package handler
 import (
 	pbAuth "FullBottle/auth/proto/auth"
 	"FullBottle/common"
+	"FullBottle/common/log"
 	"FullBottle/config"
 	"FullBottle/models"
 	"FullBottle/user/dao"
@@ -10,7 +11,6 @@ import (
 	"FullBottle/user/util"
 	"context"
 	"github.com/micro/go-micro/v2/errors"
-	"FullBottle/common/log"
 )
 
 type UserHandler struct{}
@@ -37,7 +37,7 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 	resp.Username = user.Username
 	resp.Email = user.Email
 	resp.Role = user.Role
-	resp.AvatarUri = user.AvatarUri
+	resp.AvatarUrl = user.AvatarUrl
 	resp.Status = user.Status
 	resp.CreateTime = user.CreateTime.Unix()
 	resp.UpdateTime = user.UpdateTime.Unix()
@@ -87,7 +87,7 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 	fields := models.Fields{
 		"username":   req.Username,
 		"password":   util.PasswordCrypto(req.Password),
-		"avatar_uri": req.AvatarUri,
+		"avatar_url": req.AvatarUrl,
 	}
 
 	basicUser := models.User{}

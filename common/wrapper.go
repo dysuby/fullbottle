@@ -37,7 +37,7 @@ func ServiceLogWrapper(fn server.HandlerFunc) server.HandlerFunc {
 func ServiceErrorRecovery(fn server.HandlerFunc) server.HandlerFunc {
 	return func(ctx context.Context, req server.Request, resp interface{}) error {
 		defer func() {
-			if e := recover(); e!=nil {
+			if e := recover(); e != nil {
 				log.Panic(e)
 			}
 		}()

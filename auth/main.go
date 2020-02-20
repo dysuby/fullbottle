@@ -1,13 +1,13 @@
 package main
 
 import (
-	"FullBottle/auth/handler"
-	"FullBottle/common"
-	"FullBottle/common/log"
-	"FullBottle/config"
+	"github.com/vegchic/fullbottle/auth/handler"
+	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/config"
 	"github.com/micro/go-micro/v2"
 
-	auth "FullBottle/auth/proto/auth"
+	auth "github.com/vegchic/fullbottle/auth/proto/auth"
 )
 
 func main() {

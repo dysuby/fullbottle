@@ -1,9 +1,9 @@
 package models
 
 import (
-	"FullBottle/common/log"
-	"FullBottle/config"
 	"fmt"
+	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )

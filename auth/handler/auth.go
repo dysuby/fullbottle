@@ -1,17 +1,17 @@
 package handler
 
 import (
-	"FullBottle/common"
-	"FullBottle/common/log"
-	"FullBottle/config"
 	"context"
 	"fmt"
+	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/config"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/micro/go-micro/v2/errors"
 	"strconv"
 	"time"
 
-	pb "FullBottle/auth/proto/auth"
+	pb "github.com/vegchic/fullbottle/auth/proto/auth"
 )
 
 var AppSecret = config.GetConfig().App.Secret

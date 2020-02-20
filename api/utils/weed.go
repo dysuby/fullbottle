@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"FullBottle/config"
 	"bytes"
 	"encoding/json"
+	"github.com/vegchic/fullbottle/config"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -15,7 +15,7 @@ const (
 )
 
 type FileInfo struct {
-	Size      int
+	Size int
 }
 
 type FileKeyInfo struct {

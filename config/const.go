@@ -6,7 +6,7 @@ const (
 	AuthSrvName = "fullbottle.srv.auth"
 )
 
-const AppIss = "github.com/vegchic/FullBottle"
+const AppIss = "github.com/vegchic/fullbottle"
 
 const JwtTokenExpire = int64(60 * 60 * 24)
 

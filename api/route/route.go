@@ -1,8 +1,8 @@
 package route
 
 import (
-	"FullBottle/api/handler"
-	"FullBottle/api/middleware"
+	"github.com/vegchic/fullbottle/api/handler"
+	"github.com/vegchic/fullbottle/api/middleware"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

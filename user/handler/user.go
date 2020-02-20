@@ -1,15 +1,15 @@
 package handler
 
 import (
-	pbAuth "FullBottle/auth/proto/auth"
-	"FullBottle/common"
-	"FullBottle/common/log"
-	"FullBottle/config"
-	"FullBottle/models"
-	"FullBottle/user/dao"
-	pb "FullBottle/user/proto/user"
-	"FullBottle/user/util"
 	"context"
+	pbAuth "github.com/vegchic/fullbottle/auth/proto/auth"
+	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/models"
+	"github.com/vegchic/fullbottle/user/dao"
+	pb "github.com/vegchic/fullbottle/user/proto/user"
+	"github.com/vegchic/fullbottle/user/util"
 	"github.com/micro/go-micro/v2/errors"
 )
 

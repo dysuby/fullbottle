@@ -1,8 +1,8 @@
 package common
 
 import (
-	"FullBottle/common/log"
 	"context"
+	"github.com/vegchic/fullbottle/common/log"
 	"github.com/gofrs/uuid"
 	"github.com/micro/go-micro/v2/server"
 	"github.com/sirupsen/logrus"

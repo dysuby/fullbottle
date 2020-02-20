@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"FullBottle/config"
+	"github.com/vegchic/fullbottle/config"
 	"github.com/go-redis/redis/v7"
 )
 

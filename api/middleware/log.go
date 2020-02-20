@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"FullBottle/common/log"
+	"github.com/vegchic/fullbottle/common/log"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"

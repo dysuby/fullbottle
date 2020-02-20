@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"FullBottle/api/utils"
-	"FullBottle/common"
-	"FullBottle/config"
-	"FullBottle/models"
 	"fmt"
+	"github.com/vegchic/fullbottle/api/utils"
+	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/models"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/v2/errors"
 	"net/http"
 	"strings"
 	"time"
 
-	PbUser "FullBottle/user/proto/user"
+	pbUser "github.com/vegchic/fullbottle/user/proto/user"
 )
 
 func GetUser(c *gin.Context) {
@@ -54,7 +54,7 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err := client.CreateUser(c, &PbUser.CreateUserRequest{
+	_, err := client.CreateUser(c, &pbUser.CreateUserRequest{
 		Email:    req.Email,
 		Username: req.Username,
 		Password: req.Password,
@@ -96,7 +96,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err := client.ModifyUser(c, &PbUser.ModifyUserRequest{
+	_, err := client.ModifyUser(c, &pbUser.ModifyUserRequest{
 		Id:       int64(uid),
 		Username: req.Username,
 		Password: req.Password,
@@ -173,7 +173,7 @@ func UploadAvatar(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err = client.ModifyUser(c, &PbUser.ModifyUserRequest{
+	_, err = client.ModifyUser(c, &pbUser.ModifyUserRequest{
 		Id:        int64(uid),
 		AvatarUrl: utils.JoinUrl(fileInfo.Url, fileInfo.Fid),
 	})
@@ -210,7 +210,7 @@ func UserLogin(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.UserLogin(c, &PbUser.UserLoginRequest{Email: req.Email, Password: req.Password})
+	resp, err := client.UserLogin(c, &pbUser.UserLoginRequest{Email: req.Email, Password: req.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.EmailExisted {

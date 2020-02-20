@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"FullBottle/models"
+	"github.com/vegchic/fullbottle/models"
 	"github.com/jinzhu/gorm"
 )
 

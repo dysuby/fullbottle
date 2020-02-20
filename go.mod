@@ -1,4 +1,4 @@
-module FullBottle
+module github.com/vegchic/fullbottle
 
 go 1.13
 

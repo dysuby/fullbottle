@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"github.com/vegchic/fullbottle/config"
 	"github.com/go-redis/redis/v7"
+	"github.com/vegchic/fullbottle/config"
 )
 
 var client *redis.Client
@@ -17,6 +17,6 @@ func init() {
 	})
 }
 
-func GetClient() *redis.Client {
+func Client() *redis.Client {
 	return client
 }

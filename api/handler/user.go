@@ -2,17 +2,17 @@ package handler
 
 import (
 	"fmt"
-	"github.com/vegchic/fullbottle/api/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/micro/go-micro/v2/errors"
+	"github.com/vegchic/fullbottle/api/util"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/models"
-	"github.com/gin-gonic/gin"
-	"github.com/micro/go-micro/v2/errors"
 	"net/http"
 	"strings"
 	"time"
 
-	pbUser "github.com/vegchic/fullbottle/user/proto/user"
+	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 )
 
 func GetUser(c *gin.Context) {
@@ -54,7 +54,7 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err := client.CreateUser(c, &pbUser.CreateUserRequest{
+	_, err := client.CreateUser(c, &pbuser.CreateUserRequest{
 		Email:    req.Email,
 		Username: req.Username,
 		Password: req.Password,
@@ -96,7 +96,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err := client.ModifyUser(c, &pbUser.ModifyUserRequest{
+	_, err := client.ModifyUser(c, &pbuser.ModifyUserRequest{
 		Id:       int64(uid),
 		Username: req.Username,
 		Password: req.Password,
@@ -164,7 +164,7 @@ func UploadAvatar(c *gin.Context) {
 	}
 
 	avatarName := fmt.Sprintf("%d-%d", uid, time.Now().Unix())
-	fileInfo, err := utils.UploadFile(f, avatarName)
+	fileInfo, err := util.UploadFile(f, avatarName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Error appears when uploading image: " + err.Error(),
@@ -173,9 +173,9 @@ func UploadAvatar(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	_, err = client.ModifyUser(c, &pbUser.ModifyUserRequest{
+	_, err = client.ModifyUser(c, &pbuser.ModifyUserRequest{
 		Id:        int64(uid),
-		AvatarUrl: utils.JoinUrl(fileInfo.Url, fileInfo.Fid),
+		AvatarUrl: util.JoinUrl(fileInfo.Url, fileInfo.Fid),
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -210,7 +210,7 @@ func UserLogin(c *gin.Context) {
 	}
 
 	client := common.GetUserSrvClient()
-	resp, err := client.UserLogin(c, &pbUser.UserLoginRequest{Email: req.Email, Password: req.Password})
+	resp, err := client.UserLogin(c, &pbuser.UserLoginRequest{Email: req.Email, Password: req.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.EmailExisted {

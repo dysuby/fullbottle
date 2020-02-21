@@ -2,10 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/vegchic/fullbottle/common/log"
-	"github.com/vegchic/fullbottle/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/config"
 )
 
 var db *gorm.DB
@@ -24,6 +24,6 @@ func init() {
 	db = conn
 }
 
-func GetDB() *gorm.DB {
+func DB() *gorm.DB {
 	return db
 }

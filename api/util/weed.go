@@ -1,4 +1,4 @@
-package utils
+package util
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ type FileKeyInfo struct {
 	Fid       string   `json:"fid"`
 	Url       string   `json:"url"`
 	PublicUrl string   `json:"public_url"`
-	FileInfo  FileInfo `json:"-"`
+	FileInfo 		   `json:"-"`
 }
 
 func JoinUrl(url string, path string) string {

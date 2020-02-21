@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	pbAuth "github.com/vegchic/fullbottle/auth/proto/auth"
+	"github.com/micro/go-micro/v2/errors"
+	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/models"
-	pbUser "github.com/vegchic/fullbottle/user/proto/user"
-	"github.com/micro/go-micro/v2/errors"
+	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 	"strings"
 	"time"
 
@@ -26,7 +26,7 @@ func LoginRequired() gin.HandlerFunc {
 		}
 
 		token := authorization[7:]
-		authResp, err := authClient.ParseJwtToken(c, &pbAuth.ParseJwtTokenRequest{Token: token})
+		authResp, err := authClient.ParseJwtToken(c, &pbauth.ParseJwtTokenRequest{Token: token})
 		if err != nil {
 			e := errors.Parse(err.Error())
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -37,7 +37,7 @@ func LoginRequired() gin.HandlerFunc {
 
 		// get user info
 		client := common.GetUserSrvClient()
-		userResp, err := client.GetUserInfo(c, &pbUser.GetUserRequest{Id: authResp.UserId})
+		userResp, err := client.GetUserInfo(c, &pbuser.GetUserRequest{Id: authResp.UserId})
 		if err != nil {
 			e := errors.Parse(err.Error())
 			if e.Code == common.UserNotFound {

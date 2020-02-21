@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/micro/go-micro/v2"
 	"github.com/vegchic/fullbottle/auth/handler"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
-	"github.com/micro/go-micro/v2"
 
 	auth "github.com/vegchic/fullbottle/auth/proto/auth"
 )

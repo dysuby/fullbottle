@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"github.com/vegchic/fullbottle/common/log"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/vegchic/fullbottle/common/log"
 	"time"
 )
 

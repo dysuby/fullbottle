@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/vegchic/fullbottle/common/log"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/source/env"
+	"github.com/vegchic/fullbottle/common/log"
 )
 
 type Config struct {

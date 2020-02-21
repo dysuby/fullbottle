@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/micro/go-micro/v2/client"
+	"github.com/micro/go-micro/v2/web"
 	"github.com/vegchic/fullbottle/api/route"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
-	"github.com/micro/go-micro/v2/client"
-	"github.com/micro/go-micro/v2/web"
 )
 
 func main() {

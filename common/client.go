@@ -1,11 +1,11 @@
 package common
 
 import (
-	"github.com/vegchic/fullbottle/config"
 	"github.com/micro/go-micro/v2/client"
+	"github.com/vegchic/fullbottle/config"
 
-	pbAuth "github.com/vegchic/fullbottle/auth/proto/auth"
-	pbUser "github.com/vegchic/fullbottle/user/proto/user"
+	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
+	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 )
 
 var (
@@ -16,10 +16,10 @@ func SetClient(client client.Client) {
 	c = client
 }
 
-func GetUserSrvClient() pbUser.UserService {
-	return pbUser.NewUserService(config.UserSrvName, c)
+func GetUserSrvClient() pbuser.UserService {
+	return pbuser.NewUserService(config.UserSrvName, c)
 }
 
-func GetAuthSrvClient() pbAuth.AuthService {
-	return pbAuth.NewAuthService(config.AuthSrvName, c)
+func GetAuthSrvClient() pbauth.AuthService {
+	return pbauth.NewAuthService(config.AuthSrvName, c)
 }

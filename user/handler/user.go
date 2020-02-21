@@ -2,7 +2,8 @@ package handler
 
 import (
 	"context"
-	pbAuth "github.com/vegchic/fullbottle/auth/proto/auth"
+	"github.com/micro/go-micro/v2/errors"
+	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
@@ -10,7 +11,6 @@ import (
 	"github.com/vegchic/fullbottle/user/dao"
 	pb "github.com/vegchic/fullbottle/user/proto/user"
 	"github.com/vegchic/fullbottle/user/util"
-	"github.com/micro/go-micro/v2/errors"
 )
 
 type UserHandler struct{}
@@ -119,7 +119,7 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 	}
 
 	authClient := common.GetAuthSrvClient()
-	authResp, err := authClient.GenerateJwtToken(ctx, &pbAuth.GenerateJwtTokenRequest{
+	authResp, err := authClient.GenerateJwtToken(ctx, &pbauth.GenerateJwtTokenRequest{
 		UserId: user.ID,
 		Expire: config.JwtTokenExpire,
 	})

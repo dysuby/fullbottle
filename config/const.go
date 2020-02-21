@@ -10,4 +10,4 @@ const AppIss = "github.com/vegchic/fullbottle"
 
 const JwtTokenExpire = int64(60 * 60 * 24)
 
-const AvatarMaxSize = 2 * (1 << 20) // 2mb
+const AvatarMaxSize = 1 << 20 // 1mb

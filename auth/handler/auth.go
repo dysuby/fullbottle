@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/micro/go-micro/v2/errors"
 	"strconv"
 	"time"
 

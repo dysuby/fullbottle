@@ -189,6 +189,11 @@ func GetUserAvatar(c *gin.Context) {
 	resp, err := client.GetUserAvatar(c, req)
 	if err != nil {
 		e := errors.Parse(err.Error())
+		if e.Code == common.EmptyAvatarError {
+			// TODO handle default avatar
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"msg": "avatar not found: " + e.Detail,
 		})

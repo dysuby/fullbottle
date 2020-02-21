@@ -22,6 +22,7 @@ services:
   api:
     build: ./api
     command: --registry_address=consul-server-bootstrap:8500 --server_address=0.0.0.0:8000
+    restart: always
     env_file:
       - .env
     depends_on:
@@ -32,6 +33,7 @@ services:
   user-service: &service
     build: ./user
     command: --registry_address=consul-server-bootstrap:8500
+    restart: always
     env_file:
       - .env
     depends_on:

@@ -25,6 +25,10 @@ func WithFields(fields logrus.Fields) *logrus.Entry {
 	return logger.WithFields(fields)
 }
 
+func WithError(err error) *logrus.Entry {
+	return logger.WithError(err)
+}
+
 func Infof(f string, v ...interface{}) {
 	logger.Infof(f, v...)
 }
@@ -33,12 +37,12 @@ func Warnf(f string, v ...interface{}) {
 	logger.Warnf(f, v...)
 }
 
-func Errorf(err error, f string, v ...interface{}) {
-	logger.WithError(err).Errorf(f, v...)
+func Errorf(f string, v ...interface{}) {
+	logger.Errorf(f, v...)
 }
 
-func Fatalf(err error, f string, v ...interface{}) {
-	logger.WithError(err).Errorf(f, v...)
+func Fatalf(f string, v ...interface{}) {
+	logger.Errorf(f, v...)
 }
 
 func Panic(e interface{}) {

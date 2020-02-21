@@ -15,12 +15,12 @@ func ServiceLogWrapper(fn server.HandlerFunc) server.HandlerFunc {
 
 		u, err := uuid.NewV4()
 		if err != nil {
-			log.Fatalf(err, "Failed to generate UUID")
+			log.WithError(err).Fatalf("Failed to generate UUID")
 		}
 
 		log.WithFields(logrus.Fields{
 			"uuid": u.String(),
-		}).Infof("Recv rpc request: endpoint=%s body=%s", req.Endpoint(), req.Body())
+		}).Infof("Recv rpc request: endpoint=%s", req.Endpoint())
 
 		ctx = context.WithValue(ctx, "uuid", u)
 		err = fn(ctx, req, resp)
@@ -28,7 +28,7 @@ func ServiceLogWrapper(fn server.HandlerFunc) server.HandlerFunc {
 		log.WithFields(logrus.Fields{
 			"uuid": u.String(),
 			"cost": (time.Now().UnixNano() - s.UnixNano()) / 1e6,
-		}).Infof("Send rpc response: %+v", resp)
+		}).Infof("Send rpc response err=%+v", err)
 
 		return err
 	}

@@ -24,11 +24,14 @@ func registerRoutes(g *gin.Engine) {
 		api.POST("/register", handler.RegisterUser)
 		api.POST("/login", handler.UserLogin)
 
+		api.GET("/users/avatar", handler.GetUserAvatar) // no permission asked
+
 		api.Use(middleware.LoginRequired())
 
 		api.GET("/users/profile", handler.GetUser)
 		api.PUT("/users/profile", handler.UpdateUser)
 		api.POST("/users/profile/avatar", handler.UploadAvatar)
+
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

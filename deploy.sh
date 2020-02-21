@@ -2,6 +2,8 @@
 
 set -ex
 
+export PublicIP=$(curl -s ip.sb)  # get host ip
+
 declare -A service_map=(["api"]="api" ["user"]="user-service" ["auth"]="auth-service")
 
 ./build.sh $@

@@ -33,13 +33,13 @@ var conf Config
 func init() {
 	c, err := config.NewConfig(config.WithSource(env.NewSource()))
 	if err != nil {
-		log.Fatalf(err, "Cannot load config")
+		log.WithError(err).Fatalf("Cannot load config")
 	}
 	if err = c.Scan(&conf); err != nil {
-		log.Fatalf(err, "Config format error")
+		log.WithError(err).Fatalf("Config format error")
 	}
 }
 
-func GetConfig() Config {
+func C() Config {
 	return conf
 }

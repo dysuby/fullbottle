@@ -1,4 +1,4 @@
-package models
+package db
 
 import (
 	"fmt"
@@ -11,14 +11,14 @@ import (
 var db *gorm.DB
 
 func init() {
-	conf := config.GetConfig().Mysql
+	conf := config.C().Mysql
 
 	uri := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		conf.User, conf.Password, conf.URL, conf.Database)
 
 	conn, err := gorm.Open("mysql", uri)
 	if err != nil {
-		log.Fatalf(err, "Open db failed")
+		log.WithError(err).Fatalf("Open db failed")
 	}
 
 	db = conn

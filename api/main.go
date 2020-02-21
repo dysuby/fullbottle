@@ -16,7 +16,7 @@ func main() {
 	)
 
 	if err := service.Init(); err != nil {
-		log.Fatalf(err, "Service init failed")
+		log.WithError(err).Fatalf("Service init failed")
 	}
 
 	common.SetClient(client.DefaultClient)
@@ -25,6 +25,6 @@ func main() {
 
 	// run service
 	if err := service.Run(); err != nil {
-		log.Fatalf(err, "Service running failed")
+		log.WithError(err).Fatalf("Service running failed")
 	}
 }

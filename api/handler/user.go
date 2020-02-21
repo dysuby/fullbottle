@@ -1,26 +1,27 @@
 package handler
 
 import (
-	"fmt"
+	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/api/util"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
-	"github.com/vegchic/fullbottle/models"
-	"net/http"
-	"strings"
-	"time"
-
+	userdao "github.com/vegchic/fullbottle/user/dao"
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 func GetUser(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
 
-	user := u.(*models.User)
+	user := u.(*userdao.User)
 
-	if user.Status == models.INVALID {
+	if user.Status == db.INVALID {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"msg": "Invalid user",
 		})
@@ -34,7 +35,7 @@ func GetUser(c *gin.Context) {
 			"status":      user.Status,
 			"username":    user.Username,
 			"email":       user.Email,
-			"avatar_url":  user.AvatarUrl,
+			"role":        user.Role,
 			"create_time": user.CreateTime.Unix(),
 		},
 	})
@@ -81,7 +82,7 @@ func RegisterUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
-	user := u.(*models.User)
+	user := u.(*userdao.User)
 	uid := user.ID
 
 	req := struct {
@@ -97,22 +98,15 @@ func UpdateUser(c *gin.Context) {
 
 	client := common.GetUserSrvClient()
 	_, err := client.ModifyUser(c, &pbuser.ModifyUserRequest{
-		Id:       int64(uid),
+		Uid:      uid,
 		Username: req.Username,
 		Password: req.Password,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.UserNotFound {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-				"msg": e.Detail,
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"msg": e.Detail,
-			})
-		}
-
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"msg": e.Detail,
+		})
 		return
 	}
 
@@ -123,7 +117,7 @@ func UpdateUser(c *gin.Context) {
 
 func UploadAvatar(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
-	user := u.(*models.User)
+	user := u.(*userdao.User)
 	uid := user.ID
 
 	f, header, err := c.Request.FormFile("avatar")
@@ -140,15 +134,11 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	fileHeader := make([]byte, 512)
-	if _, err := f.Read(fileHeader); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Error appears when operating image: " + err.Error(),
-		})
+	filetype := util.DetectContentType(c, f)
+	if c.IsAborted() {
 		return
 	}
 
-	filetype := http.DetectContentType(fileHeader)
 	if !strings.HasPrefix(filetype, "image") {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Invalid image format",
@@ -156,45 +146,61 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	if _, err := f.Seek(0, 0); err != nil {
+	fbytes, err := ioutil.ReadAll(f)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Error appears when operating image: " + err.Error(),
 		})
 		return
 	}
 
-	avatarName := fmt.Sprintf("%d-%d", uid, time.Now().Unix())
-	fileInfo, err := util.UploadFile(f, avatarName)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Error appears when uploading image: " + err.Error(),
-		})
-		return
+	client := common.GetUserSrvClient()
+	req := &pbuser.UploadUserAvatarRequest{
+		Uid:    uid,
+		Avatar: fbytes,
 	}
 
-	client := common.GetUserSrvClient()
-	_, err = client.ModifyUser(c, &pbuser.ModifyUserRequest{
-		Id:        int64(uid),
-		AvatarUrl: util.JoinUrl(fileInfo.Url, fileInfo.Fid),
-	})
-	if err != nil {
+	if _, err = client.UploadUserAvatar(c, req); err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.UserNotFound {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-				"msg": e.Detail,
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"msg": e.Detail,
-			})
-		}
-
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"msg": e.Detail,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "Success",
 	})
+}
+
+func GetUserAvatar(c *gin.Context) {
+	q := c.Query("uid")
+	uid, err := strconv.Atoi(q)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "invalid uid",
+		})
+		return
+	}
+	client := common.GetUserSrvClient()
+	req := &pbuser.GetUserAvatarRequest{
+		Uid: int64(uid),
+	}
+	resp, err := client.GetUserAvatar(c, req)
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"msg": "avatar not found: " + e.Detail,
+		})
+		return
+	}
+
+	b := resp.Avatar
+	reader := bytes.NewReader(b)
+
+	c.Header("Content-Type", resp.ContentType)
+	c.DataFromReader(http.StatusOK, int64(reader.Len()), "*", reader, map[string]string{})
+	return
 }
 
 func UserLogin(c *gin.Context) {

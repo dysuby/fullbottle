@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"github.com/vegchic/fullbottle/common/db"
+	"time"
+)
 
 const (
 	FILE = 1 + iota
@@ -13,7 +16,7 @@ const (
 )
 
 type ShareToken struct {
-	BasicModel
+	db.BasicModel
 	SharerID   int        `gorm:"not null"`
 	Token      string     `gorm:"not null"`
 	Action     int        `gorm:"not null;default:1"`
@@ -22,7 +25,7 @@ type ShareToken struct {
 }
 
 type ShareRef struct {
-	BasicModel
+	db.BasicModel
 	TokenID    int `gorm:"not null"`
 	ObjectType int `gorm:"not null"`
 	ObjectID   int `gorm:"not null"`

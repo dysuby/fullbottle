@@ -24,11 +24,11 @@ func main() {
 
 	// Register Handler
 	if err := auth.RegisterAuthServiceHandler(service.Server(), new(handler.AuthHandler)); err != nil {
-		log.Fatalf(err, "RegisterAuthServiceHandler failed")
+		log.WithError(err).Fatalf("RegisterAuthServiceHandler failed")
 	}
 
 	// Run service
 	if err := service.Run(); err != nil {
-		log.Fatalf(err, "Service running failed")
+		log.WithError(err).Fatalf("Service running failed")
 	}
 }

@@ -4,6 +4,8 @@ const (
 	ApiName     = "fullbottle.api"
 	UserSrvName = "fullbottle.srv.user."
 	AuthSrvName = "fullbottle.srv.auth"
+	WeedName    = "fullbottle.weed"
+	DBName      = "fullbottle.mysql"
 )
 
 const AppIss = "github.com/vegchic/fullbottle"

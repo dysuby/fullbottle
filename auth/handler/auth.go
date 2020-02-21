@@ -14,7 +14,7 @@ import (
 	pb "github.com/vegchic/fullbottle/auth/proto/auth"
 )
 
-var AppSecret = config.GetConfig().App.Secret
+var AppSecret = config.C().App.Secret
 
 type AuthHandler struct{}
 
@@ -44,7 +44,7 @@ func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRe
 		return []byte(AppSecret), nil
 	})
 	if err != nil {
-		return errors.New(config.AuthSrvName, "Parsing claims failed", common.JwtError)
+		return errors.New(config.AuthSrvName, "Invalid jwt token", common.JwtError)
 	}
 
 	if !token.Valid {
@@ -53,7 +53,7 @@ func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRe
 
 	uid, err := strconv.Atoi(claims.Id)
 	if err != nil {
-		log.Errorf(err, "Claims format error: %v", token)
+		log.WithError(err).Errorf("Claims format error: %v", token)
 		return errors.New(config.AuthSrvName, "Claims format error", common.InternalError)
 	}
 

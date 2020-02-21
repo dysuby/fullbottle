@@ -6,20 +6,24 @@ service UserService {
     rpc GetUserInfo(GetUserRequest) returns (GetUserResponse) {}
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
     rpc ModifyUser(ModifyUserRequest) returns (ModifyUserResponse) {}
+
     rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {}
+
+    rpc GetUserAvatar(GetUserAvatarRequest) returns (GetUserAvatarResponse) {}
+    rpc UploadUserAvatar(UploadUserAvatarRequest) returns (UploadUserAvatarResponse) {}
 }
 
 message GetUserRequest {
-    int64 id = 1;
+    int64 uid = 1;
 }
 
 message GetUserResponse {
-    int64 id = 1;
+    int64 uid = 1;
     string username = 2;
     string password = 3;
     string email = 4;
     int32 role = 5;
-    string avatarUrl = 6;
+    string avatarFid = 6;
     int32 status = 7;
     int64 createTime = 8;
     int64 updateTime = 9;
@@ -37,10 +41,9 @@ message CreateUserResponse {
 }
 
 message ModifyUserRequest {
-    int64 id = 1;
+    int64 uid = 1;
     string username = 2;
     string password = 3;
-    string avatarUrl = 4;
 }
 
 message ModifyUserResponse {
@@ -55,4 +58,23 @@ message UserLoginRequest {
 message UserLoginResponse {
     string token = 1;
     int64 expire = 2;
+}
+
+
+message GetUserAvatarRequest {
+    int64 uid = 1;
+}
+
+message GetUserAvatarResponse {
+    string contentType = 1;
+    bytes avatar = 2;
+}
+
+message UploadUserAvatarRequest {
+    int64 uid = 1;
+    bytes avatar = 2;
+}
+
+message UploadUserAvatarResponse {
+
 }

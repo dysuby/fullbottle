@@ -1,7 +1,9 @@
 package models
 
+import "github.com/vegchic/fullbottle/common/db"
+
 type UserBottle struct {
-	BasicModel
+	db.BasicModel
 	UserID   int     `gorm:"not null"`
 	RootID   string  `gorm:"varchar(64);not null"`
 	Capacity float64 `gorm:"type:double;not null;default:1024"` // mb
@@ -9,7 +11,7 @@ type UserBottle struct {
 }
 
 type DirectoryInfo struct {
-	BasicModel
+	db.BasicModel
 	Name     string `gorm:"type:varchar(128);not null"`
 	Path     string `gorm:"type:text;not null"`
 	BottleID int    `gorm:"not null"`
@@ -18,7 +20,7 @@ type DirectoryInfo struct {
 }
 
 type FileInfo struct {
-	BasicModel
+	db.BasicModel
 	Name     string  `gorm:"type:varchar(128);not null"`
 	FileID   string  `gorm:"type:varchar(64);not null"`
 	Size     float64 `gorm:"type:double;not null"`

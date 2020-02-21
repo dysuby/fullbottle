@@ -14,7 +14,7 @@ func ApiLogWrapper() gin.HandlerFunc {
 
 		u, err := uuid.NewV4()
 		if err != nil {
-			log.Fatalf(err, "Failed to generate UUID")
+			log.WithError(err).Fatalf("Failed to generate UUID")
 		}
 		log.WithFields(logrus.Fields{
 			"uuid":     u.String(),

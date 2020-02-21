@@ -8,7 +8,7 @@ import (
 var client *redis.Client
 
 func init() {
-	conf := config.GetConfig().Redis
+	conf := config.C().Redis
 
 	client = redis.NewClient(&redis.Options{
 		Addr:     conf.URL,

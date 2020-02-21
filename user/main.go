@@ -23,10 +23,10 @@ func main() {
 	common.SetClient(service.Client())
 
 	if err := user.RegisterUserServiceHandler(service.Server(), new(handler.UserHandler)); err != nil {
-		log.Fatalf(err, "RegisterUserServiceHandler failed")
+		log.WithError(err).Fatalf("RegisterUserServiceHandler failed")
 	}
 
 	if err := service.Run(); err != nil {
-		log.Fatalf(err, "Service running failed")
+		log.WithError(err).Fatalf("Service running failed")
 	}
 }

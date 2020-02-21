@@ -38,6 +38,8 @@ type UserService interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...client.CallOption) (*CreateUserResponse, error)
 	ModifyUser(ctx context.Context, in *ModifyUserRequest, opts ...client.CallOption) (*ModifyUserResponse, error)
 	UserLogin(ctx context.Context, in *UserLoginRequest, opts ...client.CallOption) (*UserLoginResponse, error)
+	GetUserAvatar(ctx context.Context, in *GetUserAvatarRequest, opts ...client.CallOption) (*GetUserAvatarResponse, error)
+	UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, opts ...client.CallOption) (*UploadUserAvatarResponse, error)
 }
 
 type userService struct {
@@ -92,6 +94,26 @@ func (c *userService) UserLogin(ctx context.Context, in *UserLoginRequest, opts 
 	return out, nil
 }
 
+func (c *userService) GetUserAvatar(ctx context.Context, in *GetUserAvatarRequest, opts ...client.CallOption) (*GetUserAvatarResponse, error) {
+	req := c.c.NewRequest(c.name, "UserService.GetUserAvatar", in)
+	out := new(GetUserAvatarResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userService) UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, opts ...client.CallOption) (*UploadUserAvatarResponse, error) {
+	req := c.c.NewRequest(c.name, "UserService.UploadUserAvatar", in)
+	out := new(UploadUserAvatarResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for UserService service
 
 type UserServiceHandler interface {
@@ -99,6 +121,8 @@ type UserServiceHandler interface {
 	CreateUser(context.Context, *CreateUserRequest, *CreateUserResponse) error
 	ModifyUser(context.Context, *ModifyUserRequest, *ModifyUserResponse) error
 	UserLogin(context.Context, *UserLoginRequest, *UserLoginResponse) error
+	GetUserAvatar(context.Context, *GetUserAvatarRequest, *GetUserAvatarResponse) error
+	UploadUserAvatar(context.Context, *UploadUserAvatarRequest, *UploadUserAvatarResponse) error
 }
 
 func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts ...server.HandlerOption) error {
@@ -107,6 +131,8 @@ func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts .
 		CreateUser(ctx context.Context, in *CreateUserRequest, out *CreateUserResponse) error
 		ModifyUser(ctx context.Context, in *ModifyUserRequest, out *ModifyUserResponse) error
 		UserLogin(ctx context.Context, in *UserLoginRequest, out *UserLoginResponse) error
+		GetUserAvatar(ctx context.Context, in *GetUserAvatarRequest, out *GetUserAvatarResponse) error
+		UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, out *UploadUserAvatarResponse) error
 	}
 	type UserService struct {
 		userService
@@ -133,4 +159,12 @@ func (h *userServiceHandler) ModifyUser(ctx context.Context, in *ModifyUserReque
 
 func (h *userServiceHandler) UserLogin(ctx context.Context, in *UserLoginRequest, out *UserLoginResponse) error {
 	return h.UserServiceHandler.UserLogin(ctx, in, out)
+}
+
+func (h *userServiceHandler) GetUserAvatar(ctx context.Context, in *GetUserAvatarRequest, out *GetUserAvatarResponse) error {
+	return h.UserServiceHandler.GetUserAvatar(ctx, in, out)
+}
+
+func (h *userServiceHandler) UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, out *UploadUserAvatarResponse) error {
+	return h.UserServiceHandler.UploadUserAvatar(ctx, in, out)
 }

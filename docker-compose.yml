@@ -75,12 +75,11 @@ services:
     ports:
       - "9333:9333"
       - "8080:8080"
-    command: server -dir="/data"
+    command: server -dir="/data" -volume.publicUrl=${PublicIP}:8080
     volumes:
       - ./fs/data:/data
     depends_on:
       - registrator
-
 
   registrator:
     image: gliderlabs/registrator

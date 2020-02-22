@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/v2/errors"
+	"github.com/vegchic/fullbottle/api/util"
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
@@ -16,7 +17,7 @@ import (
 func LoginRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// validate jwt token
-		authClient := common.GetAuthSrvClient()
+		authClient := common.AuthSrvClient()
 		authorization := c.GetHeader("authorization")
 		if !strings.HasPrefix(authorization, "Bearer ") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -26,7 +27,8 @@ func LoginRequired() gin.HandlerFunc {
 		}
 
 		token := authorization[7:]
-		authResp, err := authClient.ParseJwtToken(c, &pbauth.ParseJwtTokenRequest{Token: token})
+		authResp, err := authClient.ParseJwtToken(util.RpcContext(c), &pbauth.ParseJwtTokenRequest{Token: token})
+
 		if err != nil {
 			e := errors.Parse(err.Error())
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -36,8 +38,8 @@ func LoginRequired() gin.HandlerFunc {
 		}
 
 		// get user info
-		client := common.GetUserSrvClient()
-		userResp, err := client.GetUserInfo(c, &pbuser.GetUserRequest{Uid: authResp.UserId})
+		client := common.UserSrvClient()
+		userResp, err := client.GetUserInfo(util.RpcContext(c), &pbuser.GetUserRequest{Uid: authResp.UserId})
 		if err != nil {
 			e := errors.Parse(err.Error())
 			if e.Code == common.UserNotFound {

@@ -2,12 +2,21 @@ package main
 
 import (
 	"github.com/micro/go-micro/v2/client"
+	gclient "github.com/micro/go-micro/v2/client/grpc"
 	"github.com/micro/go-micro/v2/web"
 	"github.com/vegchic/fullbottle/api/route"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
 )
+
+func cli() client.Client {
+	return gclient.NewClient(
+		client.WrapCall(common.ClientLogWrapper),
+		gclient.MaxSendMsgSize(config.MaxMsgSendSize),
+		gclient.MaxRecvMsgSize(config.MaxMsgRecvSize))
+}
+
 
 func main() {
 	service := web.NewService(
@@ -19,9 +28,9 @@ func main() {
 		log.WithError(err).Fatalf("Service init failed")
 	}
 
-	common.SetClient(client.DefaultClient)
+	common.SetClient(cli())
 
-	service.Handle("/", route.GetGnRouter())
+	service.Handle("/", route.GinRouter())
 
 	// run service
 	if err := service.Run(); err != nil {

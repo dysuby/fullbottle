@@ -108,7 +108,7 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 		return errors.New(config.UserSrvName, "Password error", common.PasswordError)
 	}
 
-	authClient := common.GetAuthSrvClient()
+	authClient := common.AuthSrvClient()
 	authResp, err := authClient.GenerateJwtToken(ctx, &pbauth.GenerateJwtTokenRequest{
 		UserId: user.ID,
 		Expire: config.JwtTokenExpire,

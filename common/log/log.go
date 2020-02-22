@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+	"github.com/micro/go-micro/v2/metadata"
 	"github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 	"os"
@@ -19,6 +21,23 @@ func init() {
 			ForceFormatting: true,
 		},
 	}
+}
+
+// with `ip`, `uuid` in ctx/metadata
+func WithCtx(ctx context.Context) *logrus.Entry {
+	fields := logrus.Fields{}
+	for _, k := range []string{"ip", "uuid"} {
+		if v := ctx.Value(k); v != nil {
+			fields[k] = v
+			continue
+		}
+
+		if v, ok := metadata.Get(ctx, k); ok {
+			fields[k] = v
+			continue
+		}
+	}
+	return logger.WithFields(fields)
 }
 
 func WithFields(fields logrus.Fields) *logrus.Entry {

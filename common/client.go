@@ -16,10 +16,10 @@ func SetClient(client client.Client) {
 	c = client
 }
 
-func GetUserSrvClient() pbuser.UserService {
+func UserSrvClient() pbuser.UserService {
 	return pbuser.NewUserService(config.UserSrvName, c)
 }
 
-func GetAuthSrvClient() pbauth.AuthService {
+func AuthSrvClient() pbauth.AuthService {
 	return pbauth.NewAuthService(config.AuthSrvName, c)
 }

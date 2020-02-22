@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/micro/go-micro/v2/errors"
+	"github.com/micro/go-micro/v2/metadata"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
-	"strconv"
 	"time"
 
 	pb "github.com/vegchic/fullbottle/auth/proto/auth"
@@ -16,15 +15,30 @@ import (
 
 var AppSecret = config.C().App.Secret
 
+type Claims struct {
+	jwt.StandardClaims
+	Uid  int64
+	IP   string
+}
+
 type AuthHandler struct{}
 
 func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtTokenRequest, resp *pb.GenerateJwtTokenResponse) error {
+	var clientIp string
+	if ip, ok := metadata.Get(ctx, "ip"); ok {
+		clientIp = ip
+	}
+
 	expireTime := time.Now().Unix() + req.Expire
-	claims := jwt.StandardClaims{
-		ExpiresAt: expireTime,
-		IssuedAt:  time.Now().Unix(),
-		Id:        fmt.Sprintf("%d", req.GetUserId()),
-		Issuer:    config.AppIss,
+	claims := Claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expireTime,
+			Id:        fmt.Sprint(req.GetUserId()),
+			IssuedAt:  time.Now().Unix(),
+			Issuer:    config.AppIss,
+		},
+		Uid:            req.GetUserId(),
+		IP:             clientIp,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -39,7 +53,7 @@ func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtT
 }
 
 func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRequest, resp *pb.ParseJwtTokenResponse) error {
-	claims := jwt.StandardClaims{}
+	claims := Claims{}
 	token, err := jwt.ParseWithClaims(req.GetToken(), &claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(AppSecret), nil
 	})
@@ -51,12 +65,13 @@ func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRe
 		return errors.New(config.AuthSrvName, "Invalid jwt token", common.JwtError)
 	}
 
-	uid, err := strconv.Atoi(claims.Id)
-	if err != nil {
-		log.WithError(err).Errorf("Claims format error: %v", token)
-		return errors.New(config.AuthSrvName, "Claims format error", common.InternalError)
+	// check ip
+	if ip, ok := metadata.Get(ctx, "ip"); ok {
+		if ip != claims.IP {
+			return errors.New(config.AuthSrvName, "Invalid IP", common.JwtError)
+		}
 	}
 
-	resp.UserId = int64(uid)
+	resp.UserId = claims.Uid
 	return nil
 }

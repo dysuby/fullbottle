@@ -55,8 +55,8 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	client := common.GetUserSrvClient()
-	_, err := client.CreateUser(c, &pbuser.CreateUserRequest{
+	client := common.UserSrvClient()
+	_, err := client.CreateUser(util.RpcContext(c), &pbuser.CreateUserRequest{
 		Email:    req.Email,
 		Username: req.Username,
 		Password: req.Password,
@@ -97,8 +97,8 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	client := common.GetUserSrvClient()
-	_, err := client.ModifyUser(c, &pbuser.ModifyUserRequest{
+	client := common.UserSrvClient()
+	_, err := client.ModifyUser(util.RpcContext(c), &pbuser.ModifyUserRequest{
 		Uid:      uid,
 		Username: req.Username,
 		Password: req.Password,
@@ -130,7 +130,7 @@ func UploadAvatar(c *gin.Context) {
 	}
 	if header.Size > config.AvatarMaxSize {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "image size cannot exceed 2MB",
+			"msg": "image size cannot exceed 1MB",
 		})
 		return
 	}
@@ -155,13 +155,13 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	client := common.GetUserSrvClient()
+	client := common.UserSrvClient()
 	req := &pbuser.UploadUserAvatarRequest{
 		Uid:    uid,
 		Avatar: fbytes,
 	}
 
-	if _, err = client.UploadUserAvatar(c, req); err != nil {
+	if _, err = client.UploadUserAvatar(util.RpcContext(c), req); err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"msg": e.Detail,
@@ -183,15 +183,14 @@ func GetUserAvatar(c *gin.Context) {
 		})
 		return
 	}
-	client := common.GetUserSrvClient()
+	client := common.UserSrvClient()
 	req := &pbuser.GetUserAvatarRequest{
 		Uid: int64(uid),
 	}
-	resp, err := client.GetUserAvatar(c, req)
+	resp, err := client.GetUserAvatar(util.RpcContext(c), req)
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.EmptyAvatarError {
-			// TODO handle default avatar
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
@@ -221,8 +220,8 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	client := common.GetUserSrvClient()
-	resp, err := client.UserLogin(c, &pbuser.UserLoginRequest{Email: req.Email, Password: req.Password})
+	client := common.UserSrvClient()
+	resp, err := client.UserLogin(util.RpcContext(c), &pbuser.UserLoginRequest{Email: req.Email, Password: req.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.EmailExisted {

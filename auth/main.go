@@ -10,14 +10,18 @@ import (
 	auth "github.com/vegchic/fullbottle/auth/proto/auth"
 )
 
-func main() {
-	// New Service
-	service := micro.NewService(
+func options() []micro.Option {
+	return []micro.Option{
 		micro.Name(config.AuthSrvName),
 		micro.Version("latest"),
 		micro.WrapHandler(common.ServiceErrorRecovery),
 		micro.WrapHandler(common.ServiceLogWrapper),
-	)
+	}
+}
+
+func main() {
+	// New Service
+	service := micro.NewService(options()...)
 
 	// Initialise service
 	service.Init()

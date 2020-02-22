@@ -7,19 +7,20 @@ import (
 	"net/http"
 )
 
-func GetGnRouter() *gin.Engine {
+func GinRouter() *gin.Engine {
 	router := gin.New()
 
-	router.Use(middleware.ApiLogWrapper())
 	router.Use(gin.Recovery())
+	router.Use(middleware.WithContext())
+	router.Use(middleware.ApiLogWrapper())
 
-	registerRoutes(router)
+	registerV1Routes(router)
 
 	return router
 }
 
-func registerRoutes(g *gin.Engine) {
-	api := g.Group("/api")
+func registerV1Routes(g *gin.Engine) {
+	api := g.Group("/v1")
 	{
 		api.POST("/register", handler.RegisterUser)
 		api.POST("/login", handler.UserLogin)

@@ -12,6 +12,9 @@ do
     services="${services} ${service_map[$var]}"
 done
 
-docker-compose build $services
+if [[ $services || $1 = "-a" ]]
+then
+  docker-compose build $services
+fi
 
 docker-compose up -d $services

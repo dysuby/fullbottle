@@ -9,12 +9,7 @@ build() {
 }
 
 
-if [[ $1 -eq "-b" ]]
-then
-  exit 0
-fi
-
-if [[ $# -eq 0 ]]
+if [[ $1 = "-a" ]]
 then
     build api
     build user

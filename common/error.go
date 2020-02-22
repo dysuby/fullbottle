@@ -27,3 +27,8 @@ func NewDBError(err error) error {
 func NewWeedError(err error) error {
 	return errors.New(config.WeedName, "Weed Error: "+err.Error(), WeedError)
 }
+
+func NewRedisError(err error) error {
+	return errors.New(config.RedisName, "Redis Error: "+err.Error(), WeedError)
+
+}

@@ -6,6 +6,7 @@ const (
 	AuthSrvName = "fullbottle.srv.auth"
 	WeedName    = "fullbottle.weed"
 	DBName      = "fullbottle.mysql"
+	RedisName   = "fullbottle.redis"
 )
 
 const AppIss = "github.com/vegchic/fullbottle"

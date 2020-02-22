@@ -36,6 +36,7 @@ func GetUser(c *gin.Context) {
 			"username":    user.Username,
 			"email":       user.Email,
 			"role":        user.Role,
+			"avatar_fid":  user.AvatarFid,
 			"create_time": user.CreateTime.Unix(),
 		},
 	})

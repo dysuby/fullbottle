@@ -30,7 +30,7 @@ func registerRoutes(g *gin.Engine) {
 
 		api.GET("/users/profile", handler.GetUser)
 		api.PUT("/users/profile", handler.UpdateUser)
-		api.POST("/users/profile/avatar", handler.UploadAvatar)
+		api.POST("/users/avatar", handler.UploadAvatar)
 
 	}
 

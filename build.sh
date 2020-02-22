@@ -8,6 +8,12 @@ build() {
     cd - > /dev/null
 }
 
+
+if [[ $1 -eq "-b" ]]
+then
+  exit 0
+fi
+
 if [[ $# -eq 0 ]]
 then
     build api

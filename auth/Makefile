@@ -9,7 +9,7 @@ proto:
 .PHONY: build
 build: proto
 
-	CGO_ENABLED=0 go build -o auth-srv *.go
+	CGO_ENABLED=0 GOOS=linux go build -o auth-srv *.go
 
 .PHONY: test
 test:

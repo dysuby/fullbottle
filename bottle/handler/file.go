@@ -57,7 +57,7 @@ func (f *FileHandler) UpdateFile(ctx context.Context, req *pb.UpdateFileRequest,
 
 	subfiles, err := dao.GetFilesByFolderId(ownerId, folder.ID)
 	for _, subfile := range subfiles {
-		if file.Name == subfile.Name {
+		if file.Name == subfile.Name && file.ID != subfile.ID {
 			return errors.New(config.BottleSrvName, "Already a file with same name in parent folder", common.ConflictError)
 		}
 	}

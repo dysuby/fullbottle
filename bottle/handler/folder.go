@@ -1,4 +1,3 @@
-// TODO add lock for name unique
 package handler
 
 import (
@@ -172,7 +171,7 @@ func (*FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequ
 		return err
 	}
 	for _, v := range subfolders {
-		if name == v.Name {
+		if name == v.Name && folderId != v.ID {
 			return errors.New(config.BottleSrvName, "There is a folder with same name in parent folder", common.ExistedError)
 		}
 	}

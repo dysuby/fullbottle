@@ -2,9 +2,10 @@
 
 set -ex
 
-export PublicIP=$(curl -s ip.sb)  # get host ip
+ip=$(curl -s ip.sb)
+export public_ip=$ip  # get host ip
 
-declare -A service_map=(["api"]="api" ["user"]="user-service" ["auth"]="auth-service")
+declare -A service_map=(["api"]="api" ["user"]="user-service" ["auth"]="auth-service" ["bottle"]="bottle-service")
 
 services=""
 for var in "$@"

@@ -5,6 +5,8 @@ package fullbottle.srv.auth;
 service AuthService {
     rpc GenerateJwtToken(GenerateJwtTokenRequest) returns (GenerateJwtTokenResponse) {}
     rpc ParseJwtToken(ParseJwtTokenRequest) returns (ParseJwtTokenResponse) {}
+
+    rpc CheckFolderAccess(CheckFolderAccessRequest) returns (CheckFolderAccessResponse) {}
 }
 
 message GenerateJwtTokenRequest {
@@ -22,4 +24,13 @@ message ParseJwtTokenRequest {
 
 message ParseJwtTokenResponse {
     int64 userId = 1;
+}
+
+message CheckFolderAccessRequest {
+    int64 userId = 1;
+    int64 folderId = 2;
+}
+
+message CheckFolderAccessResponse {
+    repeated string actions = 1;
 }

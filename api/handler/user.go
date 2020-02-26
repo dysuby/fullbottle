@@ -12,16 +12,14 @@ import (
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
 func GetUser(c *gin.Context) {
 	u, _ := c.Get("CurrentUser")
-
 	user := u.(*userdao.User)
 
-	if user.Status == db.INVALID {
+	if user.Status == db.Invalid {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"msg": "Invalid user",
 		})
@@ -63,7 +61,7 @@ func RegisterUser(c *gin.Context) {
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.EmailExisted {
+		if e.Code == common.ExistedError {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"msg": "Email existed",
 			})
@@ -175,14 +173,16 @@ func UploadAvatar(c *gin.Context) {
 }
 
 func GetUserAvatar(c *gin.Context) {
-	q := c.Query("uid")
-	uid, err := strconv.Atoi(q)
-	if err != nil {
+	var uid int
+	if i, ok := c.Get("uid"); ok {
+		uid = i.(int)
+	} else {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "invalid uid",
+			"msg": "Specify user id first",
 		})
 		return
 	}
+
 	client := common.UserSrvClient()
 	req := &pbuser.GetUserAvatarRequest{
 		Uid: int64(uid),
@@ -224,7 +224,7 @@ func UserLogin(c *gin.Context) {
 	resp, err := client.UserLogin(util.RpcContext(c), &pbuser.UserLoginRequest{Email: req.Email, Password: req.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.EmailExisted {
+		if e.Code == common.ExistedError {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 				"msg": e.Detail,
 			})

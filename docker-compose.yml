@@ -40,6 +40,10 @@ services:
     <<: *service
     build: ./auth
 
+  bottle-service:
+    <<: *service
+    build: ./bottle
+
   mysql:
     image: mysql
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -76,7 +80,7 @@ services:
     ports:
       - "9333:9333"
       - "8080:8080"
-    command: server -dir="/data" -volume.publicUrl=${PublicIP}:8080
+    command: server -dir="/data" -volume.publicUrl=${public_ip}:8080
     volumes:
       - ./fs/data:/data
 

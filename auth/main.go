@@ -14,7 +14,7 @@ func options() []micro.Option {
 	return []micro.Option{
 		micro.Name(config.AuthSrvName),
 		micro.Version("latest"),
-		micro.WrapHandler(common.ServiceErrorRecovery),
+		//micro.WrapHandler(common.ServiceErrorRecovery),
 		micro.WrapHandler(common.ServiceLogWrapper),
 	}
 }
@@ -25,6 +25,8 @@ func main() {
 
 	// Initialise service
 	service.Init()
+
+	common.SetClient(service.Client())
 
 	// Register Handler
 	if err := auth.RegisterAuthServiceHandler(service.Server(), new(handler.AuthHandler)); err != nil {

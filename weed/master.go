@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/cache"
@@ -15,6 +16,8 @@ import (
 const (
 	FilePath         = "/dir/assign"
 	LookupVolumePath = "/dir/lookup"
+
+	VolumeCacheKey   = "weed:volumeid=%s"
 )
 
 type FileKeyInfo struct {
@@ -31,7 +34,6 @@ type VolumeLookupInfo struct {
 		Url       string `json:"url"`
 	} `json:"locations"`
 }
-
 
 func (v *VolumeLookupInfo) Marshal() ([]byte, error) {
 	var buf bytes.Buffer
@@ -57,7 +59,6 @@ func (v *VolumeLookupInfo) Unmarshal(b []byte) error {
 	return nil
 }
 
-
 func MasterUrl() (u *url.URL, err error) {
 	u, err = url.Parse(config.C().Weed.Master)
 	return
@@ -70,7 +71,7 @@ func AssignFileKey() (*FileKeyInfo, error) {
 	}
 	base.Path = FilePath
 
-	resp, err := HttpClient().Get(base.String())
+	resp, err := client.Get(base.String())
 	if err != nil {
 		return nil, common.NewWeedError(err)
 	}
@@ -86,14 +87,9 @@ func AssignFileKey() (*FileKeyInfo, error) {
 }
 
 func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
-	c := cache.Client()
-	key := "weed_volumeid:" + volumeId
-	if r, err := c.Get(key).Bytes(); err == nil {
-		v := &VolumeLookupInfo{}
-		err := v.Unmarshal(r)
-		if err != nil {
-			return nil, common.NewWeedError(err)
-		}
+	v := &VolumeLookupInfo{}
+	key := fmt.Sprintf(VolumeCacheKey, volumeId)
+	if err := cache.Get(key, v); err == nil {
 		return v, nil
 	}
 
@@ -101,13 +97,9 @@ func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err := res.Marshal()
-	if err != nil {
-		return nil, common.NewWeedError(err)
-	}
 
-	if err := c.Set(key, b, 24 * time.Hour).Err(); err != nil {
-		return nil, common.NewRedisError(err)
+	if err := cache.Set(key, res, 24*time.Hour); err != nil {
+		return nil, err
 	}
 	return res, nil
 }
@@ -122,7 +114,7 @@ func LookupVolumeNoCache(volumeId string) (*VolumeLookupInfo, error) {
 	q.Set("volumeId", volumeId)
 	base.RawQuery = q.Encode()
 
-	resp, err := HttpClient().Get(base.String())
+	resp, err := client.Get(base.String())
 	if err != nil {
 		return nil, common.NewWeedError(err)
 	}

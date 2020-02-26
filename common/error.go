@@ -6,11 +6,13 @@ import (
 )
 
 const (
-	UserNotFound = 1000 + iota
-	EmailExisted
+	NotFoundError = 1000 + iota
+	ExistedError
+	ConflictError
 	JwtError
 	PasswordError
 	EmptyAvatarError
+	ExceedError
 
 	FileFetchError
 	FileUploadError

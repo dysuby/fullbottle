@@ -38,7 +38,7 @@ func UploadFile(f io.Reader, name string, fid string, volumeUrl string) (resp *h
 
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	resp, err = HttpClient().Do(req)
+	resp, err = client.Do(req)
 	if err != nil {
 		return nil, common.NewWeedError(err)
 	}

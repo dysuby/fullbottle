@@ -36,6 +36,7 @@ var _ server.Option
 type AuthService interface {
 	GenerateJwtToken(ctx context.Context, in *GenerateJwtTokenRequest, opts ...client.CallOption) (*GenerateJwtTokenResponse, error)
 	ParseJwtToken(ctx context.Context, in *ParseJwtTokenRequest, opts ...client.CallOption) (*ParseJwtTokenResponse, error)
+	CheckFolderAccess(ctx context.Context, in *CheckFolderAccessRequest, opts ...client.CallOption) (*CheckFolderAccessResponse, error)
 }
 
 type authService struct {
@@ -70,17 +71,29 @@ func (c *authService) ParseJwtToken(ctx context.Context, in *ParseJwtTokenReques
 	return out, nil
 }
 
+func (c *authService) CheckFolderAccess(ctx context.Context, in *CheckFolderAccessRequest, opts ...client.CallOption) (*CheckFolderAccessResponse, error) {
+	req := c.c.NewRequest(c.name, "AuthService.CheckFolderAccess", in)
+	out := new(CheckFolderAccessResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for AuthService service
 
 type AuthServiceHandler interface {
 	GenerateJwtToken(context.Context, *GenerateJwtTokenRequest, *GenerateJwtTokenResponse) error
 	ParseJwtToken(context.Context, *ParseJwtTokenRequest, *ParseJwtTokenResponse) error
+	CheckFolderAccess(context.Context, *CheckFolderAccessRequest, *CheckFolderAccessResponse) error
 }
 
 func RegisterAuthServiceHandler(s server.Server, hdlr AuthServiceHandler, opts ...server.HandlerOption) error {
 	type authService interface {
 		GenerateJwtToken(ctx context.Context, in *GenerateJwtTokenRequest, out *GenerateJwtTokenResponse) error
 		ParseJwtToken(ctx context.Context, in *ParseJwtTokenRequest, out *ParseJwtTokenResponse) error
+		CheckFolderAccess(ctx context.Context, in *CheckFolderAccessRequest, out *CheckFolderAccessResponse) error
 	}
 	type AuthService struct {
 		authService
@@ -99,4 +112,8 @@ func (h *authServiceHandler) GenerateJwtToken(ctx context.Context, in *GenerateJ
 
 func (h *authServiceHandler) ParseJwtToken(ctx context.Context, in *ParseJwtTokenRequest, out *ParseJwtTokenResponse) error {
 	return h.AuthServiceHandler.ParseJwtToken(ctx, in, out)
+}
+
+func (h *authServiceHandler) CheckFolderAccess(ctx context.Context, in *CheckFolderAccessRequest, out *CheckFolderAccessResponse) error {
+	return h.AuthServiceHandler.CheckFolderAccess(ctx, in, out)
 }

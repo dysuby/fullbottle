@@ -16,7 +16,7 @@ func ApiLogWrapper() gin.HandlerFunc {
 		c.Next()
 
 		log.WithCtx(c).WithFields(logrus.Fields{
-			"cost":     (time.Now().UnixNano() - s.UnixNano()) / 1e6,
+			"cost": (time.Now().UnixNano() - s.UnixNano()) / 1e6,
 		}).Infof("%d ", c.Writer.Status())
 	}
 }

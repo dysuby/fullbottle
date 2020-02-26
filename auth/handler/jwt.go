@@ -17,13 +17,13 @@ var AppSecret = config.C().App.Secret
 
 type Claims struct {
 	jwt.StandardClaims
-	Uid  int64
-	IP   string
+	Uid int64
+	IP  string
 }
 
-type AuthHandler struct{}
+type JwtHandler struct{}
 
-func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtTokenRequest, resp *pb.GenerateJwtTokenResponse) error {
+func (a *JwtHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtTokenRequest, resp *pb.GenerateJwtTokenResponse) error {
 	var clientIp string
 	if ip, ok := metadata.Get(ctx, "ip"); ok {
 		clientIp = ip
@@ -37,8 +37,8 @@ func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtT
 			IssuedAt:  time.Now().Unix(),
 			Issuer:    config.AppIss,
 		},
-		Uid:            req.GetUserId(),
-		IP:             clientIp,
+		Uid: req.GetUserId(),
+		IP:  clientIp,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -52,7 +52,7 @@ func (a *AuthHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtT
 	return nil
 }
 
-func (a *AuthHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRequest, resp *pb.ParseJwtTokenResponse) error {
+func (a *JwtHandler) ParseJwtToken(ctx context.Context, req *pb.ParseJwtTokenRequest, resp *pb.ParseJwtTokenResponse) error {
 	claims := Claims{}
 	token, err := jwt.ParseWithClaims(req.GetToken(), &claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(AppSecret), nil

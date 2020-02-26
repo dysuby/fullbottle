@@ -7,7 +7,9 @@ import (
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/sirupsen/logrus"
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
+	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/cache"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
@@ -19,18 +21,23 @@ import (
 	"time"
 )
 
+const UserInfoKey = "info:usr_id=%d"
+
 type UserHandler struct{}
 
 func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, resp *pb.GetUserResponse) error {
 	uid := req.GetUid()
-	result, err := dao.GetUsersByQuery(db.Fields{"id": uid})
-	if err != nil {
-		return err
-	} else if len(result) == 0 {
-		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
+	user := &dao.User{}
+	key := fmt.Sprintf(UserInfoKey, uid)
+	if err := cache.Get(key, user); err != nil {
+		user, err := dao.GetUsersById(uid)
+		if err != nil {
+			return err
+		} else if user == nil {
+			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
+		}
+		_ = cache.Set(key, user, 24*time.Hour)
 	}
-
-	user := result[0]
 
 	resp.Uid = user.ID
 	resp.Username = user.Username
@@ -48,34 +55,41 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 }
 
 func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest, resp *pb.CreateUserResponse) error {
-	rows, err := dao.GetUsersByQuery(db.Fields{"email": req.Email})
-	if err != nil {
+	if u, err := dao.GetUsersByEmail(req.GetEmail()); err != nil {
 		return err
-	} else if len(rows) > 0 {
-		return errors.New(config.UserSrvName, "Email existed", common.EmailExisted)
+	} else if u != nil {
+		return errors.New(config.UserSrvName, "Email existed", common.ExistedError)
 	}
 
-	user := dao.User{
+	user := &dao.User{
 		Email:    req.Email,
 		Username: req.Username,
 		Password: util.PasswordCrypto(req.Password),
 	}
 
-	if err = dao.CreateUser(&user); err != nil {
+	err := dao.CreateUser(user)
+	if err != nil {
 		return err
 	}
 
+	bottleClient := common.BottleSrvClient()
+	_, err = bottleClient.InitBottle(ctx, &pbbottle.InitBottleRequest{Uid: user.ID, Capacity: config.DefaultCapacity})
+	if err != nil {
+		log.WithError(err).Errorf("Cannot init user bottle")
+	}
+
+	_ = cache.Get(fmt.Sprintf(UserInfoKey, user.ID), user)
 	return nil
 }
 
 func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest, resp *pb.ModifyUserResponse) error {
 	uid := req.GetUid()
 
-	rows, err := dao.GetUsersByQuery(db.Fields{"id": uid})
+	user, err := dao.GetUsersById(uid)
 	if err != nil {
 		return err
-	} else if len(rows) == 0 {
-		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
+	} else if user == nil {
+		return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 	}
 
 	fields := db.Fields{
@@ -83,27 +97,22 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 		"password": util.PasswordCrypto(req.Password),
 	}
 
-	basicUser := dao.User{}
-	basicUser.ID = uid
-
-	if err = dao.UpdateUser(&basicUser, fields); err != nil {
+	if err = dao.UpdateUser(user, fields); err != nil {
 		return err
 	}
-
+	_ = cache.Del(fmt.Sprintf(UserInfoKey, uid))
 	return nil
 }
 
 func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, resp *pb.UserLoginResponse) error {
 	email := req.GetEmail()
-	result, err := dao.GetUsersByQuery(db.Fields{"email": email})
+	user, err := dao.GetUsersByEmail(email)
 	if err != nil {
 		return err
-	}
-	if len(result) == 0 {
-		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
+	} else if user == nil {
+		return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 	}
 
-	user := result[0]
 	if pass := util.ComparePassword(user.Password, req.Password); !pass {
 		return errors.New(config.UserSrvName, "Password error", common.PasswordError)
 	}
@@ -122,14 +131,19 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 }
 
 func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRequest, resp *pb.GetUserAvatarResponse) error {
-	rows, err := dao.GetUsersByQuery(db.Fields{"id": req.GetUid()})
-	if err != nil {
-		return err
-	} else if len(rows) == 0 {
-		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
+	uid := req.GetUid()
+	user := &dao.User{}
+	key := fmt.Sprintf(UserInfoKey, uid)
+	if err := cache.Get(key, user); err != nil {
+		user, err := dao.GetUsersById(uid)
+		if err != nil {
+			return err
+		} else if user == nil {
+			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
+		}
+		_ = cache.Set(key, user, 24*time.Hour)
 	}
 
-	user := rows[0]
 	avatarFid := user.AvatarFid
 	if avatarFid == "" {
 		return errors.New(config.UserSrvName, "User has no avatar", common.EmptyAvatarError)
@@ -163,17 +177,17 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 }
 
 func (u *UserHandler) UploadUserAvatar(ctx context.Context, req *pb.UploadUserAvatarRequest, resp *pb.UploadUserAvatarResponse) error {
-	rows, err := dao.GetUsersByQuery(db.Fields{"id": req.GetUid()})
+	user, err := dao.GetUsersById(req.GetUid())
 	if err != nil {
 		return err
-	} else if len(rows) == 0 {
-		return errors.New(config.UserSrvName, "User not found", common.UserNotFound)
+	} else if user == nil {
+		return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 	}
-	user := rows[0]
 
 	var volume *weed.VolumeLookupInfo
 	var volumeUrl string
 	fid := user.AvatarFid
+	// if already exist, then try to rewrite
 	if user.AvatarFid != "" {
 		f, err := weed.ParseFid(user.AvatarFid)
 		if err == nil {
@@ -182,11 +196,12 @@ func (u *UserHandler) UploadUserAvatar(ctx context.Context, req *pb.UploadUserAv
 		if err != nil {
 			fid = "" // reset fid
 			log.WithFields(logrus.Fields{
-				"uid": user.ID,
+				"userId": user.ID,
 			}).WithError(errors.New(config.UserSrvName, "Dirty avatar fid", common.InternalError))
 		}
 	}
 
+	// if failed, get new file key
 	if fid != "" {
 		volumeUrl = volume.Locations[0].Url
 	} else {
@@ -200,7 +215,7 @@ func (u *UserHandler) UploadUserAvatar(ctx context.Context, req *pb.UploadUserAv
 
 	// write db first
 	if fid != user.AvatarFid {
-		err = dao.UpdateUser(&user, db.Fields{
+		err = dao.UpdateUser(user, db.Fields{
 			"avatar_fid": fid,
 		})
 		if err != nil {
@@ -209,5 +224,6 @@ func (u *UserHandler) UploadUserAvatar(ctx context.Context, req *pb.UploadUserAv
 	}
 
 	_, err = weed.UploadFile(bytes.NewReader(req.Avatar), fmt.Sprint(user.ID, "-", time.Now().Unix()), fid, volumeUrl)
+	_ = cache.Del(fmt.Sprintf(UserInfoKey, req.GetUid()))
 	return err
 }

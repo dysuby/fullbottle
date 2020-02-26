@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+package fullbottle.srv.bottle;
+
+service BottleService {
+    rpc GetBottleMetadata(GetBottleMetadataRequest) returns (GetBottleMetadataResponse) {}
+    rpc InitBottle(InitBottleRequest) returns (InitBottleResponse) {}
+    rpc UpdateBottle(UpdateBottleRequest) returns (UpdateBottleResponse) {}
+
+    rpc GetFolderInfo(GetFolderInfoRequest) returns (GetFolderInfoResponse) {}
+    rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
+    rpc UpdateFolder(UpdateFolderRequest) returns (UpdateFolderResponse) {}
+    rpc RemoveFolder(RemoveFolderRequest) returns (RemoveFolderResponse) {}
+
+    rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse) {}
+    rpc UpdateFile(UpdateFileRequest) returns (UpdateFileResponse) {}
+    rpc RemoveFile(RemoveFileRequest) returns (RemoveFileResponse) {}
+
+    rpc GetEntryOwner(GetEntryOwnerRequest) returns (GetEntryOwnerResponse) {}
+}
+
+message FileInfo {
+    int64 id = 1;
+    int64 fileId = 2;
+    string name = 3;
+    string path = 4;
+    int64 level = 5;
+    int64 size = 6;
+    string hash = 7;
+    int64 folderId = 8;
+    int64 ownerId = 9;
+    int64 createTime = 10;
+    int64 updateTime = 11;
+}
+
+message FolderInfo {
+    int64 folderId = 1;
+    string name = 2;
+    string path = 3;
+    int64 parentId = 4;
+    int64 level = 5;
+
+    int64 createTime = 6;
+    int64 updateTime = 7;
+
+    repeated FolderInfo folders = 8;
+    repeated FileInfo files = 9;
+}
+
+message GetBottleMetadataRequest {
+    int64 uid = 1;
+}
+
+message GetBottleMetadataResponse {
+    int64 bid = 1;
+    int64 capacity = 2;
+    int64 remain = 3;
+    int64 rootId = 4;
+}
+
+message InitBottleRequest {
+    int64 uid = 1;
+    int64 capacity = 2;
+}
+
+message InitBottleResponse {
+
+}
+
+message UpdateBottleRequest {
+    int64 bid = 1;
+    int64 capacity = 2;
+}
+
+message UpdateBottleResponse {
+
+}
+
+message GetFolderInfoRequest {
+    int64 folderId = 1;
+}
+
+message GetFolderInfoResponse {
+    FolderInfo folder = 1;
+}
+
+message CreateFolderRequest {
+    string name = 1;
+    int64 parentId = 2;
+    int64 ownerId = 3;
+}
+
+message CreateFolderResponse {
+    int64 folderId = 1;
+}
+
+message UpdateFolderRequest {
+    int64 folderId = 1;
+    string name = 2;
+    int64 parentId = 3;
+}
+
+message UpdateFolderResponse {
+
+}
+
+message RemoveFolderRequest {
+    int64 folderId = 1;
+}
+
+message RemoveFolderResponse {
+
+}
+
+message GetFileInfoRequest {
+    int64 fileId = 1;
+}
+
+message GetFileInfoResponse {
+    FileInfo file = 1;
+}
+
+message UpdateFileRequest {
+    int64 fileId = 1;
+    string name = 2;
+    int64 folderId = 3;
+}
+
+message UpdateFileResponse {
+
+}
+
+message RemoveFileRequest {
+    int64 fileId = 1;
+}
+
+message RemoveFileResponse {
+
+}
+
+message GetEntryOwnerRequest {
+    int64 entryId = 1;
+    bool isFolder = 2;
+}
+
+message GetEntryOwnerResponse {
+    int64 ownerId = 1;
+}

@@ -16,7 +16,7 @@ func FetchFile(fid string, volumeUrl string) (resp *http.Response, err error) {
 		Path:   fid,
 	}
 
-	resp, err = HttpClient().Get(base.String())
+	resp, err = client.Get(base.String())
 	if err != nil {
 		return nil, common.NewWeedError(err)
 	}

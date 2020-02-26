@@ -5,6 +5,7 @@ import (
 	"github.com/vegchic/fullbottle/config"
 
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
+	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 )
 
@@ -22,4 +23,8 @@ func UserSrvClient() pbuser.UserService {
 
 func AuthSrvClient() pbauth.AuthService {
 	return pbauth.NewAuthService(config.AuthSrvName, c)
+}
+
+func BottleSrvClient() pbbottle.BottleService {
+	return pbbottle.NewBottleService(config.BottleSrvName, c)
 }

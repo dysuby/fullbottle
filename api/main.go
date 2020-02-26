@@ -17,7 +17,6 @@ func cli() client.Client {
 		gclient.MaxRecvMsgSize(config.MaxMsgRecvSize))
 }
 
-
 func main() {
 	service := web.NewService(
 		web.Name(config.ApiName),

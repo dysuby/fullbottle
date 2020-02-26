@@ -14,6 +14,7 @@ then
     build api
     build user
     build auth
+    build bottle
 else
     for var in "$@"
     do

@@ -17,7 +17,7 @@ const (
 	FilePath         = "/dir/assign"
 	LookupVolumePath = "/dir/lookup"
 
-	VolumeCacheKey   = "weed:volumeid=%s"
+	VolumeCacheKey = "weed:volumeid=%s"
 )
 
 type FileKeyInfo struct {

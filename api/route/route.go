@@ -34,14 +34,11 @@ func registerV1Routes(g *gin.Engine) {
 		api.PUT("/users/profile", handler.UpdateUser)
 		api.POST("/users/avatar", handler.UploadAvatar)
 
-		// space
-		api.Use(middleware.FolderAccessCheck())
-
-		api.GET("/space", handler.GetSpaceMeta)
+		api.GET("/space/meta", handler.GetSpaceMeta)
+		api.GET("/space/folders", handler.GetFolder) // ?name=&path=
 		api.POST("/space/folders", handler.CreateFolder)
-		api.GET("/space/folders/:folder_id", handler.GetFolder)
-		api.PUT("/space/folders/:folder_id", handler.UpdateFolder)
-		api.DELETE("/space/folders/:folder_id", handler.RemoveFolder)
+		api.PUT("/space/folders", handler.UpdateFolder)
+		api.DELETE("/space/folders", handler.RemoveFolder)
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

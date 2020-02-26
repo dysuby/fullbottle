@@ -44,7 +44,6 @@ type BottleService interface {
 	GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...client.CallOption) (*GetFileInfoResponse, error)
 	UpdateFile(ctx context.Context, in *UpdateFileRequest, opts ...client.CallOption) (*UpdateFileResponse, error)
 	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error)
-	GetEntryOwner(ctx context.Context, in *GetEntryOwnerRequest, opts ...client.CallOption) (*GetEntryOwnerResponse, error)
 }
 
 type bottleService struct {
@@ -159,16 +158,6 @@ func (c *bottleService) RemoveFile(ctx context.Context, in *RemoveFileRequest, o
 	return out, nil
 }
 
-func (c *bottleService) GetEntryOwner(ctx context.Context, in *GetEntryOwnerRequest, opts ...client.CallOption) (*GetEntryOwnerResponse, error) {
-	req := c.c.NewRequest(c.name, "BottleService.GetEntryOwner", in)
-	out := new(GetEntryOwnerResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Server API for BottleService service
 
 type BottleServiceHandler interface {
@@ -182,7 +171,6 @@ type BottleServiceHandler interface {
 	GetFileInfo(context.Context, *GetFileInfoRequest, *GetFileInfoResponse) error
 	UpdateFile(context.Context, *UpdateFileRequest, *UpdateFileResponse) error
 	RemoveFile(context.Context, *RemoveFileRequest, *RemoveFileResponse) error
-	GetEntryOwner(context.Context, *GetEntryOwnerRequest, *GetEntryOwnerResponse) error
 }
 
 func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, opts ...server.HandlerOption) error {
@@ -197,7 +185,6 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		GetFileInfo(ctx context.Context, in *GetFileInfoRequest, out *GetFileInfoResponse) error
 		UpdateFile(ctx context.Context, in *UpdateFileRequest, out *UpdateFileResponse) error
 		RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error
-		GetEntryOwner(ctx context.Context, in *GetEntryOwnerRequest, out *GetEntryOwnerResponse) error
 	}
 	type BottleService struct {
 		bottleService
@@ -248,8 +235,4 @@ func (h *bottleServiceHandler) UpdateFile(ctx context.Context, in *UpdateFileReq
 
 func (h *bottleServiceHandler) RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error {
 	return h.BottleServiceHandler.RemoveFile(ctx, in, out)
-}
-
-func (h *bottleServiceHandler) GetEntryOwner(ctx context.Context, in *GetEntryOwnerRequest, out *GetEntryOwnerResponse) error {
-	return h.BottleServiceHandler.GetEntryOwner(ctx, in, out)
 }

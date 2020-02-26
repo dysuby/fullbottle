@@ -1,4 +1,4 @@
-// TODO add lock for sub entry
+// TODO add lock for name unique
 package handler
 
 import (
@@ -9,33 +9,54 @@ import (
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/bottle/util"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/cache"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
-	"strings"
+	"time"
 )
+
+const FolderLockKey = "lock:folder_id=%d"
 
 type FolderHandler struct{}
 
-func (FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRequest, resp *pb.GetFolderInfoResponse) error {
-	folderId := req.GetFolderId()
+func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRequest, resp *pb.GetFolderInfoResponse) error {
+	ownerId := req.GetOwnerId()
 
-	folder, err := dao.GetFolderById(folderId)
+	var folder *dao.FolderInfo
+	var err error
+	switch req.GetIdent().(type) {
+	case *pb.GetFolderInfoRequest_FolderId:
+		folder, err = dao.GetFolderById(ownerId, req.GetFolderId())
+	case *pb.GetFolderInfoRequest_Path:
+		names := util.SplitPath(req.GetPath())
+		if len(names) == 0 {
+			folder = &dao.FolderInfo{}
+			folder.ID = dao.RootId
+			unix := time.Unix(0, 0)
+			folder.CreateTime = &unix
+			folder.UpdateTime = &unix
+			break
+		}
+		folder, err = dao.GetFoldersByPath(ownerId, names)
+	default:
+
+	}
+
 	if err != nil {
 		return err
 	} else if folder == nil {
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	folders, files, err := util.GetSubEntry(folderId)
+	folders, files, err := util.GetSubEntry(ownerId, folder.ID)
 	if err != nil {
 		return err
 	}
 
-	f := pb.FolderInfo{
+	f := &pb.FolderInfo{
 		FolderId:   folder.ID,
 		Name:       folder.Name,
-		Path:       folder.Path,
-		ParentId:   folder.ParentID,
+		ParentId:   folder.ParentId,
 		CreateTime: folder.CreateTime.Unix(),
 		UpdateTime: folder.UpdateTime.Unix(),
 	}
@@ -46,10 +67,8 @@ func (FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoReq
 			Id:         v.ID,
 			FileId:     v.FileId,
 			Name:       v.Name,
-			Path:       v.Path,
 			Size:       v.Metadata.Size,
 			Hash:       v.Metadata.Hash,
-			Level:      v.Level,
 			FolderId:   v.FolderId,
 			OwnerId:    v.OwnerId,
 			CreateTime: v.CreateTime.Unix(),
@@ -61,63 +80,53 @@ func (FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoReq
 		f.Folders[i] = &pb.FolderInfo{
 			FolderId:   v.ID,
 			Name:       v.Name,
-			Path:       v.Path,
-			ParentId:   v.ParentID,
-			Level:      v.Level,
+			ParentId:   v.ParentId,
 			CreateTime: v.CreateTime.Unix(),
 			UpdateTime: v.UpdateTime.Unix(),
 		}
 	}
 
-	resp.Folder = &f
+	resp.Folder = f
 	return nil
 }
 
-func (FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderRequest, resp *pb.CreateFolderResponse) error {
+func (*FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderRequest, resp *pb.CreateFolderResponse) error {
 	name := req.GetName()
 	parentId := req.GetParentId()
 	ownerId := req.GetOwnerId()
 
-	parent, err := dao.GetFolderById(parentId)
-	if err != nil {
-		return err
-	} else if parent == nil {
-		return errors.New(config.BottleSrvName, "Parent folder not found", common.NotFoundError)
-	}
-	// simple check
-	if parent.OwnerId != ownerId {
-		return errors.New(config.BottleSrvName, "Owner cannot different from parent folder's", common.ConflictError)
-	}
-
-	if parent.Level+1 > config.FolderMaxLevel {
-		return errors.New(config.BottleSrvName, fmt.Sprintf("Folder level cannot exceed %s", config.FolderMaxLevel), common.ExceedError)
-	}
-
-	path := strings.Join([]string{parent.Path, parent.Name}, "") + "/"
-	level := parent.Level + 1
-
-	folders, files, err := util.GetSubEntry(parentId)
+	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
 	if err != nil {
 		return err
 	}
+	defer lock.Release()
+
+	if parentId != dao.RootId {
+		parent, err := dao.GetFolderById(ownerId, parentId)
+		if err != nil {
+			return err
+		} else if parent == nil {
+			return errors.New(config.BottleSrvName, "Parent folder not found", common.NotFoundError)
+		}
+	}
+
+	folders, err := dao.GetFoldersByParentId(ownerId, parentId)
+	if err != nil {
+		return err
+	}
+
 	for _, v := range folders {
 		if v.Name == name {
 			return errors.New(config.BottleSrvName, "There is a folder with same name in parent folder", common.ExistedError)
 		}
 	}
 
-	if len(files)+len(folders) > config.FolderMaxSub {
-		return errors.New(config.BottleSrvName, fmt.Sprintf("Cannnot create more than %s entry in a folder", config.FolderMaxSub), common.ExceedError)
-	}
-
-	folder := dao.FolderInfo{
+	folder := &dao.FolderInfo{
 		Name:     name,
-		Path:     path,
-		Level:    level,
-		ParentID: parentId,
+		ParentId: parentId,
 		OwnerId:  ownerId,
 	}
-	err = dao.CreateFolder(&folder)
+	err = dao.CreateFolder(folder)
 	if err != nil {
 		return err
 	}
@@ -126,75 +135,60 @@ func (FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderReque
 	return nil
 }
 
-func (FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequest, resp *pb.UpdateFolderResponse) error {
+func (*FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequest, resp *pb.UpdateFolderResponse) error {
 	folderId := req.GetFolderId()
 	name := req.GetName()
 	parentId := req.GetParentId()
+	ownerId := req.GetOwnerId()
 
-	var f, p *dao.FolderInfo
-	fs, err := dao.GetFoldersByIds([]int64{folderId, parentId})
+	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
 	if err != nil {
 		return err
-	} else if len(fs) != 2 {
+	}
+	defer lock.Release()
+
+	folder := &dao.FolderInfo{}
+	ids := []int64{folderId}
+	if parentId != dao.RootId {
+		ids = append(ids, parentId)
+	}
+	fs, err := dao.GetFoldersByIds(ownerId, ids)
+	if err != nil {
+		return err
+	} else if len(fs) != len(ids) {
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	if fs[0].ID == folderId {
-		f, p = fs[0], fs[1]
-	} else {
-		f, p = fs[1], fs[0]
+	for _, f := range fs {
+		if folderId == f.ID {
+			folder = f
+			break
+		}
 	}
 
-	if p.Level+1 > config.FolderMaxLevel {
-		return errors.New(config.BottleSrvName, fmt.Sprintf("Folder level cannot exceed %s", config.FolderMaxLevel), common.ExceedError)
-	}
-
-	// 禁止套娃 & cannot remove root
-	if strings.HasPrefix(p.Path, f.Path) {
-		return errors.New(config.BottleSrvName, "Folder structure error", common.ConflictError)
-	}
-
-	newPath := strings.Join([]string{p.Path, p.Name}, "") + "/"
-	newLevel := p.Level + 1
-
-	subfolders, subfiles, err := util.GetSubEntry(parentId)
+	// check name
+	subfolders, err := dao.GetFoldersByParentId(ownerId, parentId)
 	if err != nil {
 		return err
 	}
-
-	if len(subfiles)+len(subfolders) > config.FolderMaxSub {
-		return errors.New(config.BottleSrvName, fmt.Sprintf("Cannnot create more than %s entry in a folder", config.FolderMaxSub), common.ExceedError)
-	}
-
 	for _, v := range subfolders {
 		if name == v.Name {
 			return errors.New(config.BottleSrvName, "There is a folder with same name in parent folder", common.ExistedError)
 		}
 	}
 
-	subfolders, subfiles, err = util.GetSubEntryRecursive(f.ID)
-	if err != nil {
-		return err
+	// check parent_id
+	folders, _, err := util.GetSubEntryRecursive(ownerId, folderId)
+	for _, sub := range folders {
+		if sub.ID == parentId {
+			return errors.New(config.BottleSrvName, "Recursive structure", common.ConflictError)
+		}
 	}
 
-	newSubPath := strings.Join([]string{newPath, name}, "") + "/"
-	oldSubPath := strings.Join([]string{f.Path, f.Name}, "") + "/"
-	for _, v := range subfolders {
-		v.Path = strings.Replace(v.Path, oldSubPath, newSubPath, 1)
-		v.Level = newLevel + 1
-	}
+	folder.Name = name
+	folder.ParentId = parentId
 
-	for _, v := range subfiles {
-		v.Path = strings.Replace(v.Path, oldSubPath, newSubPath, 1)
-		v.Level = newLevel + 1
-	}
-
-	f.Path = newPath
-	f.Name = name
-	f.ParentID = parentId
-	f.Level = newLevel
-
-	err = dao.UpdateFolderAndSub(f, subfolders, subfiles)
+	err = dao.UpdateFolder(folder)
 	if err != nil {
 		return err
 	}
@@ -202,34 +196,41 @@ func (FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderReque
 	return nil
 }
 
-func (FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequest, resp *pb.RemoveFolderResponse) error {
+func (*FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequest, resp *pb.RemoveFolderResponse) error {
 	folderId := req.GetFolderId()
+	ownerId := req.GetOwnerId()
 
-	folder, err := dao.GetFolderById(folderId)
+	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, folderId), 100*time.Millisecond)
+	if err != nil {
+		return err
+	}
+	defer lock.Release()
+
+	folder, err := dao.GetFolderById(ownerId, folderId)
 	if err != nil {
 		return err
 	} else if folder == nil {
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	if folder.Level == 0 {
-		return errors.New(config.BottleSrvName, "Cannot remove root folder", common.ConflictError)
-	}
-
-	subfolders, subfiles, err := util.GetSubEntryRecursive(folder.ID)
+	subfolders, subfiles, err := util.GetSubEntryRecursive(ownerId, folder.ID)
 	if err != nil {
 		return err
 	}
 
+	now := time.Now()
 	for _, v := range subfolders {
 		v.Status = db.Invalid
+		v.DeleteTime = &now
 	}
 
 	for _, v := range subfiles {
 		v.Status = db.Invalid
+		v.DeleteTime = &now
 	}
 
 	folder.Status = db.Invalid
+	folder.DeleteTime = &now
 
 	err = dao.UpdateFolderAndSub(folder, subfolders, subfiles)
 	if err != nil {

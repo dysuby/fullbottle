@@ -8,7 +8,6 @@ import (
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
-	userdao "github.com/vegchic/fullbottle/user/dao"
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 	"io/ioutil"
 	"net/http"
@@ -16,10 +15,21 @@ import (
 )
 
 func GetUser(c *gin.Context) {
-	u, _ := c.Get("CurrentUser")
-	user := u.(*userdao.User)
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
-	if user.Status == db.Invalid {
+	// get user info
+	client := common.UserSrvClient()
+	userResp, err := client.GetUserInfo(util.RpcContext(c), &pbuser.GetUserRequest{Uid: uid})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
+		return
+	}
+
+	if userResp.Status == db.Invalid {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"msg": "Invalid user",
 		})
@@ -27,16 +37,8 @@ func GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
-		"user": gin.H{
-			"id":          user.ID,
-			"status":      user.Status,
-			"username":    user.Username,
-			"email":       user.Email,
-			"role":        user.Role,
-			"avatar_fid":  user.AvatarFid,
-			"create_time": user.CreateTime.Unix(),
-		},
+		"msg":  "Success",
+		"user": userResp,
 	})
 }
 
@@ -61,16 +63,9 @@ func RegisterUser(c *gin.Context) {
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.ExistedError {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"msg": "Email existed",
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"msg": e.Detail,
-			})
-		}
-
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
 		return
 	}
 
@@ -80,9 +75,8 @@ func RegisterUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
-	u, _ := c.Get("CurrentUser")
-	user := u.(*userdao.User)
-	uid := user.ID
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
 	req := struct {
 		Username string `json:"username" binding:"required,max=24,min=4"`
@@ -115,9 +109,8 @@ func UpdateUser(c *gin.Context) {
 }
 
 func UploadAvatar(c *gin.Context) {
-	u, _ := c.Get("CurrentUser")
-	user := u.(*userdao.User)
-	uid := user.ID
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
 	f, header, err := c.Request.FormFile("avatar")
 	if err != nil {
@@ -173,19 +166,19 @@ func UploadAvatar(c *gin.Context) {
 }
 
 func GetUserAvatar(c *gin.Context) {
-	var uid int
-	if i, ok := c.Get("uid"); ok {
-		uid = i.(int)
-	} else {
+	query := struct {
+		Uid int64 `form:"uid" binding:"required"`
+	}{}
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Specify user id first",
+			"msg": "Invalid uid",
 		})
 		return
 	}
 
 	client := common.UserSrvClient()
 	req := &pbuser.GetUserAvatarRequest{
-		Uid: int64(uid),
+		Uid: query.Uid,
 	}
 	resp, err := client.GetUserAvatar(util.RpcContext(c), req)
 	if err != nil {
@@ -205,7 +198,6 @@ func GetUserAvatar(c *gin.Context) {
 
 	c.Header("Content-Type", resp.ContentType)
 	c.DataFromReader(http.StatusOK, int64(reader.Len()), "*", reader, map[string]string{})
-	return
 }
 
 func UserLogin(c *gin.Context) {
@@ -225,7 +217,7 @@ func UserLogin(c *gin.Context) {
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.ExistedError {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 				"msg": e.Detail,
 			})
 		} else {

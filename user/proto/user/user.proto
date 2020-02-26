@@ -20,14 +20,13 @@ message GetUserRequest {
 message GetUserResponse {
     int64 uid = 1;
     string username = 2;
-    string password = 3;
-    string email = 4;
-    int32 role = 5;
-    string avatarFid = 6;
-    int32 status = 7;
-    int64 createTime = 8;
-    int64 updateTime = 9;
-    int64 deleteTime = 10;
+    string email = 3;
+    int32 role = 4;
+    string avatar_fid = 5;
+    int32 status = 6;
+    int64 create_time = 7;
+    int64 update_time = 8;
+    int64 delete_time = 9;
 }
 
 message CreateUserRequest {
@@ -66,7 +65,7 @@ message GetUserAvatarRequest {
 }
 
 message GetUserAvatarResponse {
-    string contentType = 1;
+    string content_type = 1;
     bytes avatar = 2;
 }
 

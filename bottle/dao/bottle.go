@@ -14,11 +14,12 @@ const (
 	GB
 )
 
+const RootId int64 = -1
+
 // user store space metadata
 type BottleMeta struct {
 	db.BasicModel
 	UserID   int64 `gorm:"not null"`
-	RootID   int64 `gorm:"not null"`
 	Capacity int64 `gorm:"type:bigint;not null"` // b
 	Remain   int64 `gorm:"type:bigint;not null"` // b
 }
@@ -60,33 +61,9 @@ func UpdateBottle(bottle *BottleMeta, fields db.Fields) error {
 }
 
 func InitBottle(bottle *BottleMeta) error {
-	tx := db.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	root := FolderInfo{
-		Name:     "root",
-		Path:     "/", // virtual root path
-		Level:    0,   // top level
-		ParentID: -1,  // non-exist
-		OwnerId:  bottle.UserID,
-	}
-
-	if err := CreateFolder(&root); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	bottle.RootID = root.ID
-
 	if err := db.DB().Create(bottle).Error; err != nil {
 		log.WithError(err).Errorf("DB error")
-		tx.Rollback()
 		return common.NewDBError(err)
 	}
-
-	return tx.Begin().Error
+	return nil
 }

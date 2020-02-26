@@ -6,16 +6,15 @@ import (
 	"github.com/vegchic/fullbottle/api/util"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
-	userdao "github.com/vegchic/fullbottle/user/dao"
 	"net/http"
 )
 
 func GetSpaceMeta(c *gin.Context) {
-	u, _ := c.Get("CurrentUser")
-	user := u.(*userdao.User)
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
 	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.GetBottleMetadata(util.RpcContext(c), &pbbottle.GetBottleMetadataRequest{Uid:user.ID})
+	resp, err := bottleClient.GetBottleMetadata(util.RpcContext(c), &pbbottle.GetBottleMetadataRequest{Uid: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -25,24 +24,35 @@ func GetSpaceMeta(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":  "Success",
 		"meta": resp,
 	})
 }
 
 func GetFolder(c *gin.Context) {
-	var folderId int
-	if f, ok := c.Get("folder_id"); !ok {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
+	query := struct {
+		Path     string `form:"path"`
+		FolderId int64  `form:"folder_id"`
+	}{}
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Specify folder id first",
+			"msg": "Invalid args",
 		})
 		return
-	} else {
-		folderId = f.(int)
 	}
 
+	var req *pbbottle.GetFolderInfoRequest
+	if query.FolderId != 0 {
+		req = &pbbottle.GetFolderInfoRequest{Ident: &pbbottle.GetFolderInfoRequest_FolderId{FolderId: query.FolderId}}
+	} else {
+		req = &pbbottle.GetFolderInfoRequest{Ident: &pbbottle.GetFolderInfoRequest_Path{Path: query.Path}}
+	}
+	req.OwnerId = uid
 	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.GetFolderInfo(util.RpcContext(c), &pbbottle.GetFolderInfoRequest{FolderId:int64(folderId)})
+	resp, err := bottleClient.GetFolderInfo(util.RpcContext(c), req)
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -52,19 +62,19 @@ func GetFolder(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"folder": resp.Folder,
 	})
 
 }
 
 func CreateFolder(c *gin.Context) {
-	u, _ := c.Get("CurrentUser")
-	user := u.(*userdao.User)
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
 	req := struct {
-		Name    string `json:"name" binding:"required,max=10,min=1"`
-		ParentId int64 `json:"parentId" binding:"required"`
+		Name     string `json:"name" binding:"required,max=10,min=1"`
+		ParentId int64  `json:"parent_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -74,7 +84,7 @@ func CreateFolder(c *gin.Context) {
 	}
 
 	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.CreateFolder(util.RpcContext(c), &pbbottle.CreateFolderRequest{Name:req.Name, ParentId:req.ParentId, OwnerId: user.ID})
+	resp, err := bottleClient.CreateFolder(util.RpcContext(c), &pbbottle.CreateFolderRequest{Name: req.Name, ParentId: req.ParentId, OwnerId: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -84,25 +94,19 @@ func CreateFolder(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":      "Success",
 		"folderId": resp.GetFolderId(),
 	})
 }
 
 func UpdateFolder(c *gin.Context) {
-	var folderId int
-	if f, ok := c.Get("folder_id"); !ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Specify folder id first",
-		})
-		return
-	} else {
-		folderId = f.(int)
-	}
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
 
 	req := struct {
-		Name    string `json:"name" binding:"required,max=10,min=1"`
-		ParentId int64 `json:"parentId" binding:"required"`
+		FolderId int64  `json:"folder_id" bindings:"required"`
+		Name     string `json:"name" binding:"required,max=10,min=1"`
+		ParentId int64  `json:"parent_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -112,8 +116,8 @@ func UpdateFolder(c *gin.Context) {
 	}
 
 	bottleClient := common.BottleSrvClient()
-	_, err := bottleClient.UpdateFolder(util.RpcContext(c), &pbbottle.UpdateFolderRequest{FolderId: int64(folderId),
-		Name:req.Name, ParentId:req.ParentId})
+	_, err := bottleClient.UpdateFolder(util.RpcContext(c), &pbbottle.UpdateFolderRequest{OwnerId: uid, FolderId: req.FolderId,
+		Name: req.Name, ParentId: req.ParentId})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -128,18 +132,21 @@ func UpdateFolder(c *gin.Context) {
 }
 
 func RemoveFolder(c *gin.Context) {
-	var folderId int
-	if f, ok := c.Get("folder_id"); !ok {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
+	req := struct {
+		FolderId int64 `json:"folder_id" bindings:"required"`
+	}{}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Specify folder id first",
+			"msg": "Body parse error: " + err.Error(),
 		})
 		return
-	} else {
-		folderId = f.(int)
 	}
 
 	bottleClient := common.BottleSrvClient()
-	_, err := bottleClient.RemoveFolder(util.RpcContext(c), &pbbottle.RemoveFolderRequest{FolderId: int64(folderId)})
+	_, err := bottleClient.RemoveFolder(util.RpcContext(c), &pbbottle.RemoveFolderRequest{OwnerId: uid, FolderId: req.FolderId})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{

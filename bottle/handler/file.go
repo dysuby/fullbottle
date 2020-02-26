@@ -2,21 +2,19 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
-	"github.com/vegchic/fullbottle/bottle/util"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
-	"strings"
+	"time"
 )
 
 type FileHandler struct{}
 
 func (f *FileHandler) GetFileInfo(ctx context.Context, req *pb.GetFileInfoRequest, resp *pb.GetFileInfoResponse) error {
-	file, err := dao.GetFileById(req.GetFileId())
+	file, err := dao.GetFileById(req.GetOwnerId(), req.GetFileId())
 
 	if err != nil {
 		return err
@@ -28,8 +26,6 @@ func (f *FileHandler) GetFileInfo(ctx context.Context, req *pb.GetFileInfoReques
 		Id:         file.ID,
 		FileId:     file.FileId,
 		Name:       file.Name,
-		Path:       file.Path,
-		Level:      file.Level,
 		Size:       file.Metadata.Size,
 		Hash:       file.Metadata.Hash,
 		FolderId:   file.FolderId,
@@ -43,35 +39,37 @@ func (f *FileHandler) GetFileInfo(ctx context.Context, req *pb.GetFileInfoReques
 func (f *FileHandler) UpdateFile(ctx context.Context, req *pb.UpdateFileRequest, resp *pb.UpdateFileResponse) error {
 	name := req.GetName()
 	folderId := req.GetFolderId()
+	fileId := req.GetFileId()
+	ownerId := req.GetOwnerId()
 
-	file, err := dao.GetFileById(req.GetFileId())
+	file, err := dao.GetFileById(ownerId, fileId)
 	if err != nil {
 		return err
 	} else if file == nil {
 		return errors.New(config.BottleSrvName, "File not found", common.NotFoundError)
 	}
-	folder, err := dao.GetFolderById(folderId)
+	folder, err := dao.GetFolderById(ownerId, folderId)
 	if err != nil {
 		return err
 	} else if folder == nil {
 		return errors.New(config.BottleSrvName, "folder not found", common.NotFoundError)
 	}
 
-	folders, files, err := util.GetSubEntry(folderId)
-	if len(folders)+len(files) > config.FolderMaxSub {
-		return errors.New(config.BottleSrvName, fmt.Sprintf("Cannnot create more than %s entry in a folder", config.FolderMaxSub), common.ExceedError)
+	subfiles, err := dao.GetFilesByFolderId(ownerId, folder.ID)
+	for _, subfile := range subfiles {
+		if file.Name == subfile.Name {
+			return errors.New(config.BottleSrvName, "Already a file with same name in parent folder", common.ConflictError)
+		}
 	}
 
 	file.Name = name
 	file.FolderId = folderId
-	file.Level = folder.Level + 1
-	file.Path = strings.Join([]string{folder.Path, folder.Name}, "/") + "/"
 
 	return dao.UpdateFiles(file)
 }
 
 func (f *FileHandler) RemoveFile(ctx context.Context, req *pb.RemoveFileRequest, resp *pb.RemoveFileResponse) error {
-	file, err := dao.GetFileById(req.GetFileId())
+	file, err := dao.GetFileById(req.GetOwnerId(), req.GetFileId())
 	if err != nil {
 		return err
 	} else if file == nil {
@@ -79,6 +77,8 @@ func (f *FileHandler) RemoveFile(ctx context.Context, req *pb.RemoveFileRequest,
 	}
 
 	file.Status = db.Invalid
+	now := time.Now()
+	file.DeleteTime = &now
 
 	return dao.UpdateFiles(file)
 }

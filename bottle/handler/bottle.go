@@ -49,7 +49,6 @@ func (b *BottleHandler) GetBottleMetadata(ctx context.Context, req *pb.GetBottle
 	resp.Bid = bottle.ID
 	resp.Capacity = bottle.Capacity
 	resp.Remain = bottle.Remain
-	resp.RootId = bottle.RootID
 
 	return nil
 }
@@ -67,29 +66,4 @@ func (b *BottleHandler) UpdateBottle(ctx context.Context, req *pb.UpdateBottleRe
 	return dao.UpdateBottle(bottle, db.Fields{
 		"capacity": req.GetCapacity(),
 	})
-}
-
-func (b *BottleHandler) GetEntryOwner(ctx context.Context, req *pb.GetEntryOwnerRequest, resp *pb.GetEntryOwnerResponse) error {
-	// ugly code
-	eid := req.GetEntryId()
-
-	if req.IsFolder {
-		if f, err := dao.GetFolderOwner(eid); err != nil {
-			return err
-		} else if f == nil {
-			return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
-		} else {
-			resp.OwnerId = f.OwnerId
-			return nil
-		}
-	} else {
-		if f, err := dao.GetFileOwner(eid); err != nil {
-			return err
-		} else if f == nil {
-			return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
-		} else {
-			resp.OwnerId = f.OwnerId
-			return nil
-		}
-	}
 }

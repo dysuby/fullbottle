@@ -12,7 +12,7 @@ const (
 	JwtError
 	PasswordError
 	EmptyAvatarError
-	ExceedError
+	BadArgError
 
 	FileFetchError
 	FileUploadError

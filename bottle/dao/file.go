@@ -23,8 +23,6 @@ type FileInfo struct {
 	Name     string   `gorm:"type:varchar(128);not null"`
 	FileId   int64    `grom:"not null"`
 	OwnerId  int64    `gorm:"not null"`
-	Path     string   `gorm:"type:text;not null"`
-	Level    int64    `gorm:"not null"`
 	FolderId int64    `gorm:"not null"`
 	Metadata FileMeta `gorm:"foreignkey:FileId;save_associations:false;preload:false"`
 }
@@ -33,9 +31,9 @@ func (FileInfo) TableName() string {
 	return "file_info"
 }
 
-func GetFileById(id int64) (*FileInfo, error) {
-	var file *FileInfo
-	if err := db.DB().Where("id = ? AND status = ?", id, db.Valid).
+func GetFileById(ownerId, id int64) (*FileInfo, error) {
+	var file FileInfo
+	if err := db.DB().Where("id = ? AND owner_id = ? AND status = ?", id, ownerId, db.Valid).
 		Preload("Metadata").First(&file).Error; err != nil {
 
 		if gorm.IsRecordNotFoundError(err) {
@@ -44,28 +42,13 @@ func GetFileById(id int64) (*FileInfo, error) {
 		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
-	return file, nil
+	return &file, nil
 }
 
-func GetFileOwner(id int64) (*FileInfo, error) {
-	var file *FileInfo
-	if err := db.DB().Select([]string{"owner_id"}).Where("id = ? AND status = ?", id, db.Valid).
-		Preload("Metadata").First(&file).Error; err != nil {
-
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
-		}
-		log.WithError(err).Errorf("DB error")
-		return nil, common.NewDBError(err)
-
-	}
-	return file, nil
-}
-
-func GetFilesByFolderId(folderId int64) ([]*FileInfo, error) {
+func GetFilesByFolderId(ownerId, folderId int64) ([]*FileInfo, error) {
 	// TODO check result
 	var files []*FileInfo
-	if err := db.DB().Where("folder_id = ? AND status = ?", folderId, db.Valid).
+	if err := db.DB().Where("folder_id = ? AND owner_id = ? AND status = ?", folderId, ownerId, db.Valid).
 		Preload("Metadata").Find(&files).Error; err != nil {
 
 		log.WithError(err).Errorf("DB error")
@@ -74,9 +57,9 @@ func GetFilesByFolderId(folderId int64) ([]*FileInfo, error) {
 	return files, nil
 }
 
-func GetFilesByFolderIds(parentIds []int64) ([]*FileInfo, error) {
+func GetFilesByFolderIds(ownerId int64, parentIds []int64) ([]*FileInfo, error) {
 	var files []*FileInfo
-	if err := db.DB().Where("folder_id in (?) AND status = ?", parentIds, db.Valid).
+	if err := db.DB().Where("folder_id in (?) AND owner_id = ? AND status = ?", parentIds, ownerId, db.Valid).
 		Preload("Metadata").Find(&files).Error; err != nil {
 
 		log.WithError(err).Errorf("DB error")

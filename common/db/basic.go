@@ -8,10 +8,6 @@ const (
 	Invalid = 1 + iota
 	Valid
 	Expired
-
-	// file upload status
-	Uploading
-	Failed
 )
 
 type Fields map[string]interface{}

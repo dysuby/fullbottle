@@ -30,7 +30,7 @@ func (BottleMeta) TableName() string {
 
 func GetBottlesById(id int64) (*BottleMeta, error) {
 	var bottle BottleMeta
-	if err := db.DB().Where("id = ?", id).First(&bottle).Error; err != nil {
+	if err := db.DB().Where("id = ? AND status = ?", id, db.Valid).First(&bottle).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -42,7 +42,7 @@ func GetBottlesById(id int64) (*BottleMeta, error) {
 
 func GetBottlesByUserId(uid int64) (*BottleMeta, error) {
 	var bottle BottleMeta
-	if err := db.DB().Where("user_id = ?", uid).First(&bottle).Error; err != nil {
+	if err := db.DB().Where("user_id = ? AND status = ?", uid, db.Valid).First(&bottle).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -52,8 +52,8 @@ func GetBottlesByUserId(uid int64) (*BottleMeta, error) {
 	return &bottle, nil
 }
 
-func UpdateBottle(bottle *BottleMeta, fields db.Fields) error {
-	if err := db.DB().Model(bottle).Update(fields).Error; err != nil {
+func UpdateBottle(meta *BottleMeta) error {
+	if err := db.DB().Save(meta).Error; err != nil {
 		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}

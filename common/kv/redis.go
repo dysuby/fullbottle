@@ -1,4 +1,4 @@
-package cache
+package kv
 
 import (
 	"errors"
@@ -11,6 +11,8 @@ import (
 
 var client *redis.Client
 
+var luaRefreshValue = redis.NewScript("local ttl = redis.call('ttl', KEYS[1]) if ttl > 0 then return redis.call('SETEX', KEYS[1], ttl, ARGV[1]) else return 0 end")
+
 func init() {
 	conf := config.C().Redis
 
@@ -19,10 +21,6 @@ func init() {
 		Password: conf.Password,
 		DB:       0,
 	})
-}
-
-func Client() *redis.Client {
-	return client
 }
 
 type Marshaller interface {
@@ -49,7 +47,18 @@ func Set(key string, m Marshaller, exp time.Duration) error {
 	if b, err := m.Marshal(); err != nil {
 		log.WithError(err).Infof("Marshal failed")
 		return common.NewRedisError(err)
-	} else if err = client.Set(key, b, exp).Err(); err != nil {
+	} else if err = client.Do("SETEX", key, exp.Milliseconds(), b).Err(); err != nil {
+		log.WithError(err).Infof("Redis failed")
+		return common.NewRedisError(err)
+	}
+	return nil
+}
+
+func RefreshValue(key string, m Marshaller) error {
+	if b, err := m.Marshal(); err != nil {
+		log.WithError(err).Infof("Marshal failed")
+		return common.NewRedisError(err)
+	} else if err = luaRefreshValue.Run(client, []string{key}, b).Err(); err != nil {
 		log.WithError(err).Infof("Redis failed")
 		return common.NewRedisError(err)
 	}

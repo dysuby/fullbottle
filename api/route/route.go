@@ -39,6 +39,9 @@ func registerV1Routes(g *gin.Engine) {
 		api.POST("/space/folders", handler.CreateFolder)
 		api.PUT("/space/folders", handler.UpdateFolder)
 		api.DELETE("/space/folders", handler.RemoveFolder)
+
+		api.POST("/space/upload/token", handler.GetUploadToken) // ask for token
+		api.POST("/space/upload/file", handler.UploadFile)      // upload file
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

@@ -1,6 +1,6 @@
 // Modify from https://github.com/bsm/redislock/blob/master/redislock.go
 
-package cache
+package kv
 
 import (
 	"errors"

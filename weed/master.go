@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/cache"
+	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/config"
 	"net/url"
 	"time"
@@ -89,7 +89,7 @@ func AssignFileKey() (*FileKeyInfo, error) {
 func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
 	v := &VolumeLookupInfo{}
 	key := fmt.Sprintf(VolumeCacheKey, volumeId)
-	if err := cache.Get(key, v); err == nil {
+	if err := kv.Get(key, v); err == nil {
 		return v, nil
 	}
 
@@ -98,7 +98,7 @@ func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
 		return nil, err
 	}
 
-	if err := cache.Set(key, res, 24*time.Hour); err != nil {
+	if err := kv.Set(key, res, 24*time.Hour); err != nil {
 		return nil, err
 	}
 	return res, nil

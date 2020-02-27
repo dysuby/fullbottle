@@ -8,13 +8,14 @@ import (
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/bottle/util"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/cache"
+	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 	"time"
 )
 
-const FolderLockKey = "lock:folder_id=%d"
+// use for folder name unique
+const FolderLockKey = "lock:parent_id=%d"
 
 type FolderHandler struct{}
 
@@ -94,7 +95,7 @@ func (*FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderRequ
 	parentId := req.GetParentId()
 	ownerId := req.GetOwnerId()
 
-	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
+	lock, err := kv.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
 	if err != nil {
 		return err
 	}
@@ -140,7 +141,7 @@ func (*FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequ
 	parentId := req.GetParentId()
 	ownerId := req.GetOwnerId()
 
-	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
+	lock, err := kv.Obtain(fmt.Sprintf(FolderLockKey, parentId), 100*time.Millisecond)
 	if err != nil {
 		return err
 	}
@@ -199,7 +200,7 @@ func (*FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequ
 	folderId := req.GetFolderId()
 	ownerId := req.GetOwnerId()
 
-	lock, err := cache.Obtain(fmt.Sprintf(FolderLockKey, folderId), 100*time.Millisecond)
+	lock, err := kv.Obtain(fmt.Sprintf(FolderLockKey, folderId), 100*time.Millisecond)
 	if err != nil {
 		return err
 	}

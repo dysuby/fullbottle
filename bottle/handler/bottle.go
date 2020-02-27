@@ -6,7 +6,6 @@ import (
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 )
 
@@ -63,7 +62,6 @@ func (b *BottleHandler) UpdateBottle(ctx context.Context, req *pb.UpdateBottleRe
 		return errors.New(config.BottleSrvName, "Bottle existed", common.InternalError)
 	}
 
-	return dao.UpdateBottle(bottle, db.Fields{
-		"capacity": req.GetCapacity(),
-	})
+	bottle.Capacity = req.GetCapacity()
+	return dao.UpdateBottle(bottle)
 }

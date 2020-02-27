@@ -43,12 +43,12 @@ func GetUser(c *gin.Context) {
 }
 
 func RegisterUser(c *gin.Context) {
-	req := struct {
+	body := struct {
 		Email    string `json:"email" binding:"required,email"`
 		Username string `json:"username" binding:"required,max=24,min=4"`
 		Password string `json:"password" binding:"required,max=18,min=6"`
 	}{}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Arguments parse error: " + err.Error(),
 		})
@@ -57,9 +57,9 @@ func RegisterUser(c *gin.Context) {
 
 	client := common.UserSrvClient()
 	_, err := client.CreateUser(util.RpcContext(c), &pbuser.CreateUserRequest{
-		Email:    req.Email,
-		Username: req.Username,
-		Password: req.Password,
+		Email:    body.Email,
+		Username: body.Username,
+		Password: body.Password,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -78,11 +78,11 @@ func UpdateUser(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 
-	req := struct {
+	body := struct {
 		Username string `json:"username" binding:"required,max=24,min=4"`
 		Password string `json:"password" binding:"required,max=18,min=6"`
 	}{}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Arguments parse error: " + err.Error(),
 		})
@@ -92,8 +92,8 @@ func UpdateUser(c *gin.Context) {
 	client := common.UserSrvClient()
 	_, err := client.ModifyUser(util.RpcContext(c), &pbuser.ModifyUserRequest{
 		Uid:      uid,
-		Username: req.Username,
-		Password: req.Password,
+		Username: body.Username,
+		Password: body.Password,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -201,11 +201,11 @@ func GetUserAvatar(c *gin.Context) {
 }
 
 func UserLogin(c *gin.Context) {
-	req := struct {
+	body := struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,max=18,min=6"`
 	}{}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
@@ -213,7 +213,7 @@ func UserLogin(c *gin.Context) {
 	}
 
 	client := common.UserSrvClient()
-	resp, err := client.UserLogin(util.RpcContext(c), &pbuser.UserLoginRequest{Email: req.Email, Password: req.Password})
+	resp, err := client.UserLogin(util.RpcContext(c), &pbuser.UserLoginRequest{Email: body.Email, Password: body.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.ExistedError {

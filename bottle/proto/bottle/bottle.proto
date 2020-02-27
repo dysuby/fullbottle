@@ -15,6 +15,9 @@ service BottleService {
     rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse) {}
     rpc UpdateFile(UpdateFileRequest) returns (UpdateFileResponse) {}
     rpc RemoveFile(RemoveFileRequest) returns (RemoveFileResponse) {}
+
+    rpc GenerateUploadToken(GenerateUploadTokenRequest) returns (GenerateUploadTokenResponse) {}
+    rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {}
 }
 
 message FileInfo {
@@ -140,4 +143,41 @@ message RemoveFileRequest {
 
 message RemoveFileResponse {
 
+}
+
+message GenerateUploadTokenRequest {
+    int64 owner_id = 1;
+    string filename = 2;
+    int64 folder_id = 3;
+    string hash = 4;
+    int64 size = 5;
+    string mime = 6;
+}
+
+message GenerateUploadTokenResponse {
+    string token = 1;
+    bool need_upload = 2;
+}
+
+message UploadFileRequest {
+    string token = 1;
+    int64 offset = 2;
+    bytes raw = 3;
+}
+
+
+enum UploadStatus {
+    _ = 0;
+
+    uploading = 1;
+
+    // 2, 3 wouldn't appear in normal case
+    manifest = 2;
+    weed_done = 3;
+
+    finish = 4;
+}
+
+message UploadFileResponse {
+    UploadStatus status = 1;
 }

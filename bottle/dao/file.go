@@ -5,18 +5,8 @@ import (
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/log"
+	"github.com/vegchic/fullbottle/weed"
 )
-
-type FileMeta struct {
-	db.BasicModel
-	FId  string `gorm:"type:varchar(64);not null"`
-	Size int64  `gorm:"type:bigint;not null"`
-	Hash string `gorm:"type:varchar(128);not null"`
-}
-
-func (FileMeta) TableName() string {
-	return "file_meta"
-}
 
 type FileInfo struct {
 	db.BasicModel
@@ -29,6 +19,12 @@ type FileInfo struct {
 
 func (FileInfo) TableName() string {
 	return "file_info"
+}
+
+func (f *FileInfo) FromUploadMeta(meta *weed.FileUploadMeta) {
+	f.Name = meta.Name
+	f.OwnerId = meta.OwnerId
+	f.FolderId = meta.FolderId
 }
 
 func GetFileById(ownerId, id int64) (*FileInfo, error) {
@@ -69,9 +65,31 @@ func GetFilesByFolderIds(ownerId int64, parentIds []int64) ([]*FileInfo, error) 
 }
 
 func UpdateFiles(file *FileInfo) error {
-	if err := db.DB().Table("file_info").Updates(file).Error; err != nil {
+	if err := db.DB().Updates(file).Error; err != nil {
 		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}
 	return nil
+}
+
+func CreateFile(file *FileInfo, meta *FileMeta) error {
+	return db.DB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(file).Error; err != nil {
+			log.WithError(err).Errorf("DB error")
+			return common.NewDBError(err)
+		}
+
+		var bottle BottleMeta
+		if err := db.DB().Where("user_id = ? AND status = ?", file.OwnerId, db.Valid).First(&bottle).Error; err != nil {
+			log.WithError(err).Errorf("DB error")
+			return common.NewDBError(err)
+		}
+
+		bottle.Remain -= meta.Size
+		if err := tx.Save(&bottle).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

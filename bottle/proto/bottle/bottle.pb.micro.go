@@ -44,6 +44,8 @@ type BottleService interface {
 	GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...client.CallOption) (*GetFileInfoResponse, error)
 	UpdateFile(ctx context.Context, in *UpdateFileRequest, opts ...client.CallOption) (*UpdateFileResponse, error)
 	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error)
+	GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, opts ...client.CallOption) (*GenerateUploadTokenResponse, error)
+	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error)
 }
 
 type bottleService struct {
@@ -158,6 +160,26 @@ func (c *bottleService) RemoveFile(ctx context.Context, in *RemoveFileRequest, o
 	return out, nil
 }
 
+func (c *bottleService) GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, opts ...client.CallOption) (*GenerateUploadTokenResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GenerateUploadToken", in)
+	out := new(GenerateUploadTokenResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bottleService) UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.UploadFile", in)
+	out := new(UploadFileResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for BottleService service
 
 type BottleServiceHandler interface {
@@ -171,6 +193,8 @@ type BottleServiceHandler interface {
 	GetFileInfo(context.Context, *GetFileInfoRequest, *GetFileInfoResponse) error
 	UpdateFile(context.Context, *UpdateFileRequest, *UpdateFileResponse) error
 	RemoveFile(context.Context, *RemoveFileRequest, *RemoveFileResponse) error
+	GenerateUploadToken(context.Context, *GenerateUploadTokenRequest, *GenerateUploadTokenResponse) error
+	UploadFile(context.Context, *UploadFileRequest, *UploadFileResponse) error
 }
 
 func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, opts ...server.HandlerOption) error {
@@ -185,6 +209,8 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		GetFileInfo(ctx context.Context, in *GetFileInfoRequest, out *GetFileInfoResponse) error
 		UpdateFile(ctx context.Context, in *UpdateFileRequest, out *UpdateFileResponse) error
 		RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error
+		GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, out *GenerateUploadTokenResponse) error
+		UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error
 	}
 	type BottleService struct {
 		bottleService
@@ -235,4 +261,12 @@ func (h *bottleServiceHandler) UpdateFile(ctx context.Context, in *UpdateFileReq
 
 func (h *bottleServiceHandler) RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error {
 	return h.BottleServiceHandler.RemoveFile(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, out *GenerateUploadTokenResponse) error {
+	return h.BottleServiceHandler.GenerateUploadToken(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error {
+	return h.BottleServiceHandler.UploadFile(ctx, in, out)
 }

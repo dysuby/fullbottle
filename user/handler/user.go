@@ -9,7 +9,7 @@ import (
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/cache"
+	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
@@ -29,14 +29,14 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 	uid := req.GetUid()
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
-	if err := cache.Get(key, user); err != nil {
+	if err := kv.Get(key, user); err != nil {
 		user, err := dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {
 			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 		}
-		_ = cache.Set(key, user, 24*time.Hour)
+		_ = kv.Set(key, user, 24*time.Hour)
 	}
 
 	resp.Uid = user.ID
@@ -78,7 +78,7 @@ func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest,
 		log.WithError(err).Errorf("Cannot init user bottle")
 	}
 
-	_ = cache.Get(fmt.Sprintf(UserInfoKey, user.ID), user)
+	_ = kv.Get(fmt.Sprintf(UserInfoKey, user.ID), user)
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 	if err = dao.UpdateUser(user, fields); err != nil {
 		return err
 	}
-	_ = cache.Del(fmt.Sprintf(UserInfoKey, uid))
+	_ = kv.Del(fmt.Sprintf(UserInfoKey, uid))
 	return nil
 }
 
@@ -134,14 +134,14 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 	uid := req.GetUid()
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
-	if err := cache.Get(key, user); err != nil {
+	if err := kv.Get(key, user); err != nil {
 		user, err := dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {
 			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 		}
-		_ = cache.Set(key, user, 24*time.Hour)
+		_ = kv.Set(key, user, 24*time.Hour)
 	}
 
 	avatarFid := user.AvatarFid
@@ -223,7 +223,8 @@ func (u *UserHandler) UploadUserAvatar(ctx context.Context, req *pb.UploadUserAv
 		}
 	}
 
-	_, err = weed.UploadFile(bytes.NewReader(req.Avatar), fmt.Sprint(user.ID, "-", time.Now().Unix()), fid, volumeUrl)
-	_ = cache.Del(fmt.Sprintf(UserInfoKey, req.GetUid()))
+	_, err = weed.UploadSingleFile(bytes.NewReader(req.Avatar), fmt.Sprint(user.ID, "-", time.Now().Unix()),
+		fid, volumeUrl, false)
+	_ = kv.Del(fmt.Sprintf(UserInfoKey, req.GetUid()))
 	return err
 }

@@ -157,6 +157,7 @@ message GenerateUploadTokenRequest {
 message GenerateUploadTokenResponse {
     string token = 1;
     bool need_upload = 2;
+    repeated int32 uploaded = 3;
 }
 
 message UploadFileRequest {
@@ -180,4 +181,5 @@ enum UploadStatus {
 
 message UploadFileResponse {
     UploadStatus status = 1;
+    repeated int32 uploaded = 2;
 }

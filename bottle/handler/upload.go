@@ -13,9 +13,9 @@ import (
 	"time"
 )
 
-type TransferHandler struct{}
+type UploadHandler struct{}
 
-func (*TransferHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateUploadTokenRequest, resp *pb.GenerateUploadTokenResponse) error {
+func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateUploadTokenRequest, resp *pb.GenerateUploadTokenResponse) error {
 	ownerId := req.GetOwnerId()
 	filename := req.GetFilename()
 	folderId := req.GetFolderId()
@@ -25,6 +25,15 @@ func (*TransferHandler) GenerateUploadToken(ctx context.Context, req *pb.Generat
 
 	// create upload meta
 	upload := weed.NewUploadMeta(ownerId, folderId, filename, hash, size, mime)
+	var history weed.FileUploadMeta
+	if err := kv.Get(upload.Token, &history); err == nil {
+		upload = &history
+	} else {
+		// store for 15 days
+		if err := kv.Set(upload.Token, upload, 15*24*time.Hour); err != nil {
+			return err
+		}
+	}
 
 	// check file is already uploaded, then client only need to call UploadFile without file data
 	meta, err := dao.GetFileMetaByHash(hash)
@@ -34,16 +43,12 @@ func (*TransferHandler) GenerateUploadToken(ctx context.Context, req *pb.Generat
 		resp.NeedUpload = false
 	}
 
-	// store for 15 days
-	if err := kv.Set(upload.Token, upload, 15*24*time.Hour); err != nil {
-		return err
-	}
-
+	resp.Uploaded = upload.UploadedChunk()
 	resp.Token = upload.Token
 	return nil
 }
 
-func (*TransferHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) error {
+func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) error {
 	token := req.GetToken()
 
 	// fetch upload meta
@@ -97,5 +102,6 @@ func (*TransferHandler) UploadFile(ctx context.Context, req *pb.UploadFileReques
 	}
 
 	resp.Status = pb.UploadStatus(upload.Status)
+	resp.Uploaded = upload.UploadedChunk()
 	return nil
 }

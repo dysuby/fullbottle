@@ -1,10 +1,8 @@
 package weed
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/vegchic/fullbottle/common"
-	"io"
 )
 
 type ChunkInfo struct {
@@ -23,10 +21,10 @@ type ChunkManifest struct {
 }
 
 // generate manifest reader
-func (m *ChunkManifest) Reader() (io.Reader, error) {
+func (m *ChunkManifest) Json() ([]byte, error) {
 	b, err := json.Marshal(m)
 	if err != nil {
 		return nil, common.NewWeedError(err)
 	}
-	return bytes.NewReader(b), nil
+	return b, nil
 }

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"encoding/json"
 	"github.com/jinzhu/gorm"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
@@ -13,6 +14,7 @@ type FileMeta struct {
 	Fid  string `gorm:"type:varchar(64);not null"`
 	Size int64  `gorm:"type:bigint;not null"`
 	Hash string `gorm:"type:varchar(128);not null"`
+	ChunkManifest string `gorm:"type:text;not null"`
 }
 
 func (FileMeta) TableName() string {
@@ -23,6 +25,15 @@ func (f *FileMeta) FromUploadMeta(meta *weed.FileUploadMeta) {
 	f.Fid = meta.Fid
 	f.Size = meta.Size
 	f.Hash = meta.Hash
+	b, _ := meta.ChunkManifest.Json()
+	f.ChunkManifest = string(b)
+}
+
+func (f *FileMeta) GetChunkInfo() (cm *weed.ChunkManifest, err error) {
+	if err = json.Unmarshal([]byte(f.ChunkManifest), cm); err != nil {
+		return
+	}
+	return
 }
 
 func GetFileMetaByHash(hash string) (*FileMeta, error) {

@@ -2,10 +2,13 @@ package handler
 
 import (
 	"context"
+	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/bottle/service"
+	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
+	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/weed"
 	"time"
 )
@@ -59,6 +62,9 @@ func (*TransferHandler) UploadFile(ctx context.Context, req *pb.UploadFileReques
 		// upload chunk
 		offset := req.GetOffset()
 		raw := req.GetRaw()
+		if len(raw) == 0 {
+			return errors.New(config.BottleSrvName, "Empty file", common.BadArgError)
+		}
 		err = upload.Upload(raw, offset)
 		if err != nil {
 			return err

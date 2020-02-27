@@ -122,11 +122,11 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
 		if err != nil {
 			return err
 		}
-		reader, err := f.Reader()
+		b, err := f.ChunkManifest.Json()
 		if err != nil {
 			return err
 		}
-		_, err = UploadSingleFile(reader, f.Name, key.Fid, key.Url, true)
+		_, err = UploadSingleFile(bytes.NewBuffer(b), f.Name, key.Fid, key.Url, true)
 		if err != nil {
 			return err
 		}

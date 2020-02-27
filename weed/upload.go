@@ -39,8 +39,7 @@ type FileUploadMeta struct {
 
 func (f *FileUploadMeta) init() {
 	raw := fmt.Sprintf("%d:%s:%d:%s", f.OwnerId, f.Name, f.FolderId, f.Hash)
-	// todo sign
-	f.Token = raw
+	f.Token = hashToken(raw)
 }
 
 func (f *FileUploadMeta) SetStatus(s int) {

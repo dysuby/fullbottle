@@ -18,6 +18,8 @@ service BottleService {
 
     rpc GenerateUploadToken(GenerateUploadTokenRequest) returns (GenerateUploadTokenResponse) {}
     rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {}
+
+    rpc GetDownloadUrl(GetDownloadUrlRequest) returns (GetDownloadUrlResponse) {}
 }
 
 message FileInfo {
@@ -182,4 +184,13 @@ enum UploadStatus {
 message UploadFileResponse {
     UploadStatus status = 1;
     repeated int32 uploaded = 2;
+}
+
+message GetDownloadUrlRequest {
+    int64 file_id = 1;
+    int64 owner_id = 2;
+}
+
+message GetDownloadUrlResponse {
+    string url = 1;
 }

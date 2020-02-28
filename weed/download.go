@@ -25,3 +25,22 @@ func FetchFile(fid string, volumeUrl string) (resp *http.Response, err error) {
 	}
 	return
 }
+
+func GetDownloadUrl(fid string) (*url.URL, error) {
+	parsed, err := ParseFid(fid)
+	if err != nil {
+		return nil, err
+	}
+
+	volume, err := LookupVolume(parsed.VolumeId)
+	if err != nil {
+		return nil, err
+	}
+
+	base := &url.URL{
+		Scheme: "http",
+		Host:   volume.Locations[0].Url,
+		Path:   fid,
+	}
+	return base, nil
+}

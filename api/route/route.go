@@ -46,7 +46,7 @@ func registerV1Routes(g *gin.Engine) {
 		api.POST("/space/upload/token", handler.GetUploadToken) // ask for token
 		api.POST("/space/upload/file", handler.UploadFile)      // upload file
 
-		api.POST("/space/download/file")
+		api.POST("/space/download/file", handler.DownloadFile)
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
@@ -12,6 +13,8 @@ import (
 	"github.com/vegchic/fullbottle/weed"
 	"time"
 )
+
+const UploadLockKey = "lock:token=%s"
 
 type UploadHandler struct{}
 
@@ -50,6 +53,13 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 
 func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) error {
 	token := req.GetToken()
+
+	// lock for upload meta
+	lock, err := kv.Obtain(fmt.Sprintf(UploadLockKey, token), 100*time.Millisecond)
+	if err != nil {
+		return err
+	}
+	defer lock.Release()
 
 	// fetch upload meta
 	upload := &weed.FileUploadMeta{}

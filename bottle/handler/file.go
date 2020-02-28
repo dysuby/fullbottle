@@ -6,9 +6,7 @@ import (
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
-	"time"
 )
 
 type FileHandler struct{}
@@ -76,9 +74,5 @@ func (f *FileHandler) RemoveFile(ctx context.Context, req *pb.RemoveFileRequest,
 		return errors.New(config.BottleSrvName, "File not found", common.NotFoundError)
 	}
 
-	file.Status = db.Invalid
-	now := time.Now()
-	file.DeleteTime = &now
-
-	return dao.UpdateFiles(file)
+	return dao.RemoveFile(file.OwnerId, file)
 }

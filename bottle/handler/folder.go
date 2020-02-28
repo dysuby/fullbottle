@@ -9,7 +9,6 @@ import (
 	"github.com/vegchic/fullbottle/bottle/util"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
-	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 	"time"
 )
@@ -218,21 +217,7 @@ func (*FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequ
 		return err
 	}
 
-	now := time.Now()
-	for _, v := range subfolders {
-		v.Status = db.Invalid
-		v.DeleteTime = &now
-	}
-
-	for _, v := range subfiles {
-		v.Status = db.Invalid
-		v.DeleteTime = &now
-	}
-
-	folder.Status = db.Invalid
-	folder.DeleteTime = &now
-
-	err = dao.UpdateFolderAndSub(folder, subfolders, subfiles)
+	err = dao.RemoveFolderAndSub(folder, subfolders, subfiles)
 	if err != nil {
 		return err
 	}

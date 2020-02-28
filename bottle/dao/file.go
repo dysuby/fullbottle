@@ -6,6 +6,7 @@ import (
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/weed"
+	"time"
 )
 
 type FileInfo struct {
@@ -14,6 +15,7 @@ type FileInfo struct {
 	FileId   int64    `grom:"not null"`
 	OwnerId  int64    `gorm:"not null"`
 	FolderId int64    `gorm:"not null"`
+	Size     int64    `gorm:"not null"`
 	Metadata FileMeta `gorm:"foreignkey:FileId;save_associations:false;preload:false"`
 }
 
@@ -25,6 +27,7 @@ func (f *FileInfo) FromUploadMeta(meta *weed.FileUploadMeta) {
 	f.Name = meta.Name
 	f.OwnerId = meta.OwnerId
 	f.FolderId = meta.FolderId
+	f.Size = meta.Size
 }
 
 func GetFileById(ownerId, id int64) (*FileInfo, error) {
@@ -80,12 +83,36 @@ func CreateFile(file *FileInfo, meta *FileMeta) error {
 		}
 
 		var bottle BottleMeta
-		if err := db.DB().Where("user_id = ? AND status = ?", file.OwnerId, db.Valid).First(&bottle).Error; err != nil {
+		if err := tx.Where("user_id = ? AND status = ?", file.OwnerId, db.Valid).First(&bottle).Error; err != nil {
 			log.WithError(err).Errorf("DB error")
 			return common.NewDBError(err)
 		}
 
 		bottle.Remain -= meta.Size
+		if err := tx.Save(&bottle).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func RemoveFile(ownerId int64, file *FileInfo) error {
+	return db.DB().Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		file.Status = db.Invalid
+		file.DeleteTime = &now
+		if err := tx.Save(file).Error; err != nil {
+			return common.NewDBError(err)
+		}
+
+		var bottle BottleMeta
+		if err := tx.Where("user_id = ? AND status = ?", ownerId, db.Valid).First(&bottle).Error; err != nil {
+			log.WithError(err).Errorf("DB error")
+			return common.NewDBError(err)
+		}
+
+		bottle.Remain += file.Size
 		if err := tx.Save(&bottle).Error; err != nil {
 			return err
 		}

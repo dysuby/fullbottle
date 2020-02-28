@@ -5,6 +5,7 @@ import (
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/log"
+	"time"
 )
 
 type FolderInfo struct {
@@ -94,9 +95,14 @@ func UpdateFolder(folder *FolderInfo) error {
 	return nil
 }
 
-func UpdateFolderAndSub(folder *FolderInfo, folders []*FolderInfo, files []*FileInfo) error {
+func RemoveFolderAndSub(folder *FolderInfo, folders []*FolderInfo, files []*FileInfo) error {
 	return db.DB().Transaction(func(tx *gorm.DB) error {
+		size := int64(0)
+		now := time.Now()
+
 		for _, f := range folders {
+			f.Status = db.Invalid
+			f.DeleteTime = &now
 			if err := tx.Save(f).Error; err != nil {
 				log.WithError(err).Errorf("DB error")
 				return common.NewDBError(err)
@@ -104,16 +110,33 @@ func UpdateFolderAndSub(folder *FolderInfo, folders []*FolderInfo, files []*File
 		}
 
 		for _, f := range files {
+			f.Status = db.Invalid
+			f.DeleteTime = &now
 			if err := tx.Save(f).Error; err != nil {
 				log.WithError(err).Errorf("DB error")
 				return common.NewDBError(err)
 			}
+			size += f.Size
 		}
 
+		folder.Status = db.Invalid
+		folder.DeleteTime = &now
 		if err := tx.Save(folder).Error; err != nil {
 			log.WithError(err).Errorf("DB error")
 			return common.NewDBError(err)
 		}
+
+		var bottle BottleMeta
+		if err := tx.Where("user_id = ? AND status = ?", folder.OwnerId, db.Valid).First(&bottle).Error; err != nil {
+			log.WithError(err).Errorf("DB error")
+			return common.NewDBError(err)
+		}
+
+		bottle.Remain += size
+		if err := tx.Save(&bottle).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }

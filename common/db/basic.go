@@ -8,6 +8,7 @@ const (
 	Invalid = 1 + iota
 	Valid
 	Expired
+	Canceled
 )
 
 type Fields map[string]interface{}

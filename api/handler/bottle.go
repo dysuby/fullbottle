@@ -192,7 +192,7 @@ func UpdateFile(c *gin.Context) {
 	})
 }
 
-func RemoveFile(c *gin.Context)  {
+func RemoveFile(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 

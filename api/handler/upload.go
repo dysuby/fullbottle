@@ -65,11 +65,11 @@ func GetUploadToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":   "Success",
+		"msg": "Success",
 		"result": gin.H{
-			"token": resp.Token,
+			"token":       resp.Token,
 			"need_upload": resp.NeedUpload,
-			"uploaded": resp.Uploaded,
+			"uploaded":    resp.Uploaded,
 		},
 	})
 }
@@ -123,9 +123,9 @@ func UploadFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":    "Success",
+		"msg": "Success",
 		"result": gin.H{
-			"status": resp.Status,
+			"status":   resp.Status,
 			"uploaded": resp.Uploaded,
 		},
 	})

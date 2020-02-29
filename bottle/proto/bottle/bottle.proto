@@ -20,6 +20,8 @@ service BottleService {
     rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {}
 
     rpc GetDownloadUrl(GetDownloadUrlRequest) returns (GetDownloadUrlResponse) {}
+
+    rpc ValidateEntry(ValidateEntryRequest) returns (ValidateEntryResponse) {}
 }
 
 message FileInfo {
@@ -75,9 +77,15 @@ message UpdateBottleResponse {
 }
 
 message GetFolderInfoRequest {
+    message Path {
+        string relative = 1;
+        int64 base_folder = 2;   // relative path, -1 means root
+        repeated int64 filter_folders = 3;   // only in these folders
+        repeated int64 filter_files = 4;    // only in these files
+    }
     oneof ident {
         int64 folder_id = 1;
-        string path = 2;
+        Path path = 2;
     }
     int64 owner_id = 3;
 }
@@ -193,4 +201,15 @@ message GetDownloadUrlRequest {
 
 message GetDownloadUrlResponse {
     string url = 1;
+}
+
+message ValidateEntryRequest {
+    repeated int64 file_ids = 1;
+    repeated int64 folder_ids = 2;
+    int64 owner_id = 3;
+    int64 parent_id = 4;
+}
+
+message ValidateEntryResponse {
+
 }

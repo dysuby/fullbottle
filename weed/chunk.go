@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/util"
 )
 
 type ChunkInfo struct {
@@ -33,7 +34,6 @@ func (m *ChunkManifest) Json() ([]byte, error) {
 	return b, nil
 }
 
-
 const (
 	Inited = iota
 	Uploading
@@ -47,7 +47,7 @@ type FileUploadMeta struct {
 	OwnerId  int64
 	FolderId int64
 
-	Status int	// shouldn't modify directly
+	Status int // shouldn't modify directly
 
 	Hash string
 	Mime string
@@ -60,7 +60,7 @@ type FileUploadMeta struct {
 
 func (f *FileUploadMeta) init() {
 	raw := fmt.Sprintf("%d:%s:%d:%s", f.OwnerId, f.Name, f.FolderId, f.Hash)
-	f.Token = hashToken(raw)
+	f.Token = util.TokenMd5(raw)
 }
 
 func (f *FileUploadMeta) SetStatus(s int) {
@@ -161,7 +161,7 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
 func (f *FileUploadMeta) UploadedChunk() []int32 {
 	var ranges []int32
 	for _, c := range f.Chunks {
-		ranges = append(ranges, int32(c.Offset / f.ChunkSize))
+		ranges = append(ranges, int32(c.Offset/f.ChunkSize))
 	}
 	return ranges
 }

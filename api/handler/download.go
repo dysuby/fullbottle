@@ -27,7 +27,7 @@ func DownloadFile(c *gin.Context) {
 	}
 
 	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.GetDownloadUrl(util.RpcContext(c), &pbbottle.GetDownloadUrlRequest{FileId:req.FileId, OwnerId:uid})
+	resp, err := bottleClient.GetDownloadUrl(util.RpcContext(c), &pbbottle.GetDownloadUrlRequest{FileId: req.FileId, OwnerId: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{

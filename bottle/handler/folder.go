@@ -6,6 +6,7 @@ import (
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/bottle/dao"
 	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
+	"github.com/vegchic/fullbottle/bottle/service"
 	"github.com/vegchic/fullbottle/bottle/util"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
@@ -22,21 +23,43 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 	ownerId := req.GetOwnerId()
 
 	var folder *dao.FolderInfo
+
+	var filterFiles []int64
+	var filterFolders []int64
+
+	// determine folder to scan
 	var err error
 	switch req.GetIdent().(type) {
 	case *pb.GetFolderInfoRequest_FolderId:
 		folder, err = dao.GetFolderById(ownerId, req.GetFolderId())
-	case *pb.GetFolderInfoRequest_Path:
-		names := util.SplitPath(req.GetPath())
+	case *pb.GetFolderInfoRequest_Path_:
+		path := req.GetPath()
+		base := path.GetBaseFolder()
+		names := util.SplitPath(path.GetRelative())
+
+		// determine base folder
+		var baseFolder *dao.FolderInfo
+		if base == dao.RootId {
+			baseFolder = dao.VirtualRoot()
+		} else {
+			f, err := dao.GetFolderById(ownerId, base)
+			if err != nil {
+				return err
+			} else if f == nil {
+				return errors.New(config.BottleSrvName, "Base folder not found", common.NotFoundError)
+			}
+			baseFolder = f
+		}
+
+		// if path is empty, then break
 		if len(names) == 0 {
-			folder = &dao.FolderInfo{}
-			folder.ID = dao.RootId
-			unix := time.Unix(0, 0)
-			folder.CreateTime = &unix
-			folder.UpdateTime = &unix
+			folder = baseFolder
+			filterFiles = path.GetFilterFiles()
+			filterFolders = path.GetFilterFolders()
 			break
 		}
-		folder, err = dao.GetFoldersByPath(ownerId, names)
+		// find folder by path
+		folder, err = dao.GetFoldersByPath(ownerId, names, baseFolder.ID, path.GetFilterFolders())
 	default:
 
 	}
@@ -47,7 +70,7 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	folders, files, err := util.GetSubEntry(ownerId, folder.ID)
+	folders, files, err := service.GetSubEntry(ownerId, folder.ID, filterFolders, filterFiles)
 	if err != nil {
 		return err
 	}
@@ -109,7 +132,7 @@ func (*FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderRequ
 		}
 	}
 
-	folders, err := dao.GetFoldersByParentId(ownerId, parentId)
+	folders, err := dao.GetFoldersByParentId(ownerId, parentId, nil)
 	if err != nil {
 		return err
 	}
@@ -166,7 +189,7 @@ func (*FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequ
 	}
 
 	// check name
-	subfolders, err := dao.GetFoldersByParentId(ownerId, parentId)
+	subfolders, err := dao.GetFoldersByParentId(ownerId, parentId, nil)
 	if err != nil {
 		return err
 	}
@@ -177,7 +200,7 @@ func (*FolderHandler) UpdateFolder(ctx context.Context, req *pb.UpdateFolderRequ
 	}
 
 	// check parent_id
-	folders, _, err := util.GetSubEntryRecursive(ownerId, folderId)
+	folders, _, err := service.GetSubEntryRecursive(ownerId, folderId)
 	for _, sub := range folders {
 		if sub.ID == parentId {
 			return errors.New(config.BottleSrvName, "Recursive structure", common.ConflictError)
@@ -212,7 +235,7 @@ func (*FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequ
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	subfolders, subfiles, err := util.GetSubEntryRecursive(ownerId, folder.ID)
+	subfolders, subfiles, err := service.GetSubEntryRecursive(ownerId, folder.ID)
 	if err != nil {
 		return err
 	}

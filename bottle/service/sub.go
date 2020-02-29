@@ -1,4 +1,4 @@
-package util
+package service
 
 import (
 	"github.com/vegchic/fullbottle/bottle/dao"
@@ -33,13 +33,13 @@ func GetSubEntryRecursive(ownerId, folderId int64) (folders []*dao.FolderInfo, f
 	return
 }
 
-func GetSubEntry(ownerId, folderId int64) (subfolder []*dao.FolderInfo, subfile []*dao.FileInfo, err error) {
-	subfolder, err = dao.GetFoldersByParentId(ownerId, folderId)
+func GetSubEntry(ownerId, folderId int64, filterFolders []int64, filterFiles []int64) (subfolder []*dao.FolderInfo, subfile []*dao.FileInfo, err error) {
+	subfolder, err = dao.GetFoldersByParentId(ownerId, folderId, filterFolders)
 	if err != nil {
 		return
 	}
 
-	subfile, err = dao.GetFilesByFolderId(ownerId, folderId)
+	subfile, err = dao.GetFilesByFolderId(ownerId, folderId, filterFiles)
 	if err != nil {
 		return
 	}

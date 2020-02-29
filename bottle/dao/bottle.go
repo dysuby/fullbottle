@@ -4,7 +4,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
-	"github.com/vegchic/fullbottle/common/log"
 )
 
 const (
@@ -34,7 +33,6 @@ func GetBottlesById(id int64) (*BottleMeta, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return &bottle, nil
@@ -46,7 +44,6 @@ func GetBottlesByUserId(uid int64) (*BottleMeta, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return &bottle, nil
@@ -54,7 +51,6 @@ func GetBottlesByUserId(uid int64) (*BottleMeta, error) {
 
 func UpdateBottle(meta *BottleMeta) error {
 	if err := db.DB().Save(meta).Error; err != nil {
-		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}
 	return nil
@@ -62,7 +58,6 @@ func UpdateBottle(meta *BottleMeta) error {
 
 func InitBottle(bottle *BottleMeta) error {
 	if err := db.DB().Create(bottle).Error; err != nil {
-		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}
 	return nil

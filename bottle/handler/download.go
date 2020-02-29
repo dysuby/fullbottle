@@ -10,7 +10,7 @@ import (
 	"github.com/vegchic/fullbottle/weed"
 )
 
-type DownloadHandler struct {}
+type DownloadHandler struct{}
 
 func (*DownloadHandler) GetDownloadUrl(ctx context.Context, req *pb.GetDownloadUrlRequest, resp *pb.GetDownloadUrlResponse) error {
 	fileId := req.GetFileId()

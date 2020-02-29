@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package fullbottle.srv.share;
+
+import "github.com/vegchic/fullbottle/bottle/proto/bottle/bottle.proto";
+
+service ShareService {
+    // share entrance
+    rpc ShareStatus(ShareStatusRequest) returns (ShareStatusResponse) {}
+    rpc AccessShare(AccessShareRequest) returns (AccessShareResponse) {}
+
+    // viewer
+	rpc GetShareInfo(GetShareInfoRequest) returns (GetShareInfoResponse) {}
+	rpc GetShareFolder(GetShareFolderRequest) returns (GetShareFolderResponse) {}
+	rpc GetShareDownloadUrl(GetShareDownloadUrlRequest) returns (GetShareDownloadUrlResponse) {}
+
+    // owner
+    rpc CreateShare(CreateShareRequest) returns (CreateShareResponse) {}
+	rpc UpdateShare(UpdateShareRequest) returns (UpdateShareResponse) {}
+	rpc CancelShare(CancelShareRequest) returns (CancelShareResponse) {}
+}
+
+message ShareStatusRequest {
+    string token = 1;
+    int64 viewer_id = 2;
+}
+
+message ShareStatusResponse {
+    int32 status = 1;
+    int64 owner_id = 2;
+    bool is_public = 3;
+}
+
+message AccessShareRequest {
+    string token = 1;
+    string code = 2;
+    int64 viewer_id = 3;
+}
+
+message AccessShareResponse {
+    string access_token = 1;
+}
+
+message GetShareInfoRequest {
+    string access_token = 1;
+    int64 viewer_id = 2;
+}
+
+message GetShareInfoResponse {
+    int64 id = 1;
+    int64 sharer_id = 2;
+    int64 exp = 3;
+    int64 download_times = 4;
+    int64 view_times = 5;
+}
+
+message GetShareFolderRequest {
+    string access_token = 1;
+    string path = 2;
+    int64 viewer_id = 3;
+}
+
+message GetShareFolderResponse {
+    bottle.FolderInfo folder = 1;
+}
+
+message GetShareDownloadUrlRequest {
+    string access_token = 1;
+    int64 file_id = 2;
+    string path = 3;
+    int64 viewer_id = 4;
+}
+
+message GetShareDownloadUrlResponse {
+    string url = 1;
+}
+
+message CreateShareRequest {
+    int64 sharer_id = 1;
+    string code = 2;
+    int64 parent_id = 3;
+    repeated int64 folder_ids = 4;
+    repeated int64 file_ids = 5;
+    int64 exp = 6;      // 0 means forever
+    bool is_public = 7;
+}
+
+message CreateShareResponse {
+    int64 id = 1;
+    string token = 2;
+}
+
+message UpdateShareRequest {
+    int64 id = 1;
+    int64 sharer_id = 2;
+
+    string code = 3;
+    int64 exp = 7;
+    bool is_public = 8;
+}
+
+message UpdateShareResponse {
+
+}
+
+message CancelShareRequest {
+    int64 id = 1;
+    int64 sharer_id = 2;
+}
+
+message CancelShareResponse {
+
+}

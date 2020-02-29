@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
-	"github.com/vegchic/fullbottle/common/log"
 )
 
 const (
@@ -57,7 +56,6 @@ func GetUsersById(id int64) (*User, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return &user, nil
@@ -69,7 +67,6 @@ func GetUsersByEmail(email string) (*User, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return &user, nil
@@ -77,7 +74,6 @@ func GetUsersByEmail(email string) (*User, error) {
 
 func CreateUser(user *User) error {
 	if err := db.DB().Create(user).Error; err != nil {
-		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}
 	return nil
@@ -85,7 +81,6 @@ func CreateUser(user *User) error {
 
 func UpdateUser(user *User, fields db.Fields) error {
 	if err := db.DB().Model(user).Update(fields).Error; err != nil {
-		log.WithError(err).Errorf("DB error")
 		return common.NewDBError(err)
 	}
 	return nil

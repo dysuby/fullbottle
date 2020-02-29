@@ -4,7 +4,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
-	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/weed"
 	"time"
 )
@@ -38,19 +37,21 @@ func GetFileById(ownerId, id int64) (*FileInfo, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return &file, nil
 }
 
-func GetFilesByFolderId(ownerId, folderId int64) ([]*FileInfo, error) {
+func GetFilesByFolderId(ownerId, folderId int64, filterFiles []int64) ([]*FileInfo, error) {
 	// TODO check result
 	var files []*FileInfo
-	if err := db.DB().Where("folder_id = ? AND owner_id = ? AND status = ?", folderId, ownerId, db.Valid).
+	query := db.DB()
+	if filterFiles != nil {
+		query = query.Where("id in (?)", filterFiles)
+	}
+	if err := query.Where("folder_id = ? AND owner_id = ? AND status = ?", folderId, ownerId, db.Valid).
 		Preload("Metadata").Find(&files).Error; err != nil {
 
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return files, nil
@@ -61,15 +62,13 @@ func GetFilesByFolderIds(ownerId int64, parentIds []int64) ([]*FileInfo, error) 
 	if err := db.DB().Where("folder_id in (?) AND owner_id = ? AND status = ?", parentIds, ownerId, db.Valid).
 		Preload("Metadata").Find(&files).Error; err != nil {
 
-		log.WithError(err).Errorf("DB error")
 		return nil, common.NewDBError(err)
 	}
 	return files, nil
 }
 
 func UpdateFiles(file *FileInfo) error {
-	if err := db.DB().Updates(file).Error; err != nil {
-		log.WithError(err).Errorf("DB error")
+	if err := db.DB().Save(file).Error; err != nil {
 		return common.NewDBError(err)
 	}
 	return nil
@@ -78,13 +77,11 @@ func UpdateFiles(file *FileInfo) error {
 func CreateFile(file *FileInfo, meta *FileMeta) error {
 	return db.DB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(file).Error; err != nil {
-			log.WithError(err).Errorf("DB error")
 			return common.NewDBError(err)
 		}
 
 		var bottle BottleMeta
 		if err := tx.Where("user_id = ? AND status = ?", file.OwnerId, db.Valid).First(&bottle).Error; err != nil {
-			log.WithError(err).Errorf("DB error")
 			return common.NewDBError(err)
 		}
 
@@ -108,7 +105,6 @@ func RemoveFile(ownerId int64, file *FileInfo) error {
 
 		var bottle BottleMeta
 		if err := tx.Where("user_id = ? AND status = ?", ownerId, db.Valid).First(&bottle).Error; err != nil {
-			log.WithError(err).Errorf("DB error")
 			return common.NewDBError(err)
 		}
 

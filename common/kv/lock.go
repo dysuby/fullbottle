@@ -4,13 +4,11 @@ package kv
 
 import (
 	"errors"
+	"github.com/go-redis/redis/v7"
 	"github.com/vegchic/fullbottle/common"
-	"math/rand"
+	"github.com/vegchic/fullbottle/util"
 	"strconv"
 	"time"
-	"unsafe"
-
-	"github.com/go-redis/redis/v7"
 )
 
 var (
@@ -76,7 +74,7 @@ func (l *Lock) Release() error {
 }
 
 func Obtain(key string, ttl time.Duration) (*Lock, error) {
-	token := genToken(10)
+	token := util.GenToken(10)
 
 	var timer *time.Timer
 	for ddl := time.Now().Add(ttl); time.Now().Before(ddl); {
@@ -100,32 +98,4 @@ func Obtain(key string, ttl time.Duration) (*Lock, error) {
 	}
 
 	return nil, common.NewRedisError(errors.New("cannot obtain lock"))
-}
-
-// https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
-
-var src = rand.NewSource(time.Now().UnixNano())
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const (
-	letterIdxBits = 6
-	letterIdxMask = 1<<letterIdxBits - 1
-	letterIdxMax  = 63 / letterIdxBits
-)
-
-func genToken(n int) string {
-	b := make([]byte, n)
-
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
-	}
-	return *(*string)(unsafe.Pointer(&b))
 }

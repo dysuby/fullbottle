@@ -1,9 +1,7 @@
 package weed
 
 import (
-	"crypto/md5"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -27,9 +25,4 @@ func ParseFid(fid string) (Fid, error) {
 
 func IsSuccessStatus(statuscode int) bool {
 	return statuscode >= 200 && statuscode < 300
-}
-
-func hashToken(raw string) string {
-	// use md5 to sign token
-	return fmt.Sprintf("%x", md5.Sum([]byte(raw)))
 }

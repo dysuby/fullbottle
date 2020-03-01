@@ -8,6 +8,8 @@ import (
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/util"
+	"time"
 )
 
 type AccessToken struct {
@@ -18,7 +20,8 @@ type AccessToken struct {
 }
 
 func (at *AccessToken) init() {
-	at.Token = fmt.Sprintf("%s:%s:%s", at.Id, at.SharerId, at.ViewerId)
+	raw := fmt.Sprintf("%d:%d:%d:%d", at.Id, at.SharerId, at.ViewerId, time.Now().Unix())
+	at.Token = util.TokenMd5(raw)
 }
 
 func (at *AccessToken) Marshal() ([]byte, error) {

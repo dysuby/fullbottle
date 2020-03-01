@@ -51,7 +51,7 @@ func GetFoldersByPath(ownerId int64, names []string, baseFolder int64, filterFol
 			query = query.Where("id in (?)", filterFolders)
 			filterFolders = nil // only filter top level, used by share service
 		}
-		if err := db.DB().Where("parent_id = ? AND owner_id = ? AND name = ? AND status = ?",
+		if err := query.Where("parent_id = ? AND owner_id = ? AND name = ? AND status = ?",
 			parentId, ownerId, name, db.Valid).First(&folder).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return nil, nil

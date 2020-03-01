@@ -25,31 +25,43 @@ const (
 type ShareInfo struct {
 	db.BasicModel
 	SharerId       int64       `gorm:"not null"`
-	Token          string      `gorm:"unique;not null"` // identifier
-	Code           string      `gorm:"not null"`        // access code, empty means public share
+	Token          string      `gorm:"type:varchar(256);unique;not null"` // identifier
+	Code           string      `gorm:"type:varchar(64);not null"`        // access code, empty means public share
 	Privacy        int32       `gorm:"type:smallint;not null;default:1"`
 	ParentFolderId int64       `gorm:"not null"` // all share objects' parent
-	ExpireTime     *time.Time  `gorm:"not null"`
+	ExpireTime     *time.Time  `gorm:""`
 	ShareRefs      []*ShareRef `gorm:"foreignkey:ShareId;save_associations:false;preload:false"`
+}
+
+func (ShareInfo) TableName() string {
+	return "share_info"
 }
 
 type ShareRef struct {
 	db.BasicModel
 	ShareId   int64 `gorm:"not null"`
-	EntryType int   `gorm:"not null"`
+	EntryType int   `gorm:"type:smallint;not null"`
 	EntryId   int64 `gorm:"not null"`
+}
+
+func (ShareRef) TableName() string {
+	return "share_ref"
 }
 
 type ShareMetrics struct {
 	db.BasicModel
 	ShareId  int64 `gorm:"not null"`
-	ViewerId int64 `gorm:"not null"` // viewer id, who is access the share
+	ViewerId int64 `gorm:"not null"` // viewer id, who access the share
 	Action   int32 `gorm:"type:smallint;not null"`
 }
 
+func (ShareMetrics) TableName() string {
+	return "share_metrics"
+}
+
 type MetricsResult struct {
-	Action int32  `gorm:"action"`
-	Times  int64  `gorm:"times"`
+	Action int32
+	Times  int64
 }
 
 func InitShare(info *ShareInfo) error {
@@ -59,6 +71,7 @@ func InitShare(info *ShareInfo) error {
 		}
 
 		for _, ref := range info.ShareRefs {
+			ref.ShareId = info.ID
 			if err := tx.Create(ref).Error; err != nil {
 				return common.NewDBError(err)
 			}
@@ -84,8 +97,11 @@ func UpdateShare(info *ShareInfo) error {
 	})
 }
 
-func CancelShare(info *ShareInfo) error {
-	info.Status = db.Canceled
+func CancelShare(info *ShareInfo, status int32) error {
+	if status != db.Canceled && status != db.Expired {
+		return nil
+	}
+	info.Status = status
 	now := time.Now()
 	info.DeleteTime = &now
 	if err := db.DB().Save(info).Error; err != nil {
@@ -95,25 +111,25 @@ func CancelShare(info *ShareInfo) error {
 }
 
 func GetShareById(sharerId int64, id int64) (*ShareInfo, error) {
-	var info *ShareInfo
-	if err := db.DB().Where("id = ? AND share_id = ? AND status = ?", id, sharerId, db.Valid).First(&sharerId).Error; err != nil {
+	var info ShareInfo
+	if err := db.DB().Where("id = ? AND sharer_id = ? AND status = ?", id, sharerId, db.Valid).First(&info).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
 		return nil, common.NewDBError(err)
 	}
-	return info, nil
+	return &info, nil
 }
 
 func GetShareByToken(token string) (*ShareInfo, error) {
-	var info *ShareInfo
-	if err := db.DB().Where("token = ? AND status = ?", token, db.Valid).Find(info).Error; err != nil {
+	var info ShareInfo
+	if err := db.DB().Where("token = ? AND status = ?", token, db.Valid).Find(&info).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
 		return nil, common.NewDBError(err)
 	}
-	return info, nil
+	return &info, nil
 }
 
 func CreateShareMetrics(metric *ShareMetrics) error {
@@ -125,8 +141,8 @@ func CreateShareMetrics(metric *ShareMetrics) error {
 
 func GetShareMetrics(shareId int64) ([]MetricsResult, error) {
 	var res []MetricsResult
-	err := db.DB().Select("action, count(distinct viewer_id) AS times").
-		Where("share_id = ? AND status = ?", shareId, db.Valid).Group("action").Find(res).Error
+	err := db.DB().Table("share_metrics").Select("action, count(distinct viewer_id) AS times").
+		Where("share_id = ? AND status = ?", shareId, db.Valid).Group("action").Scan(&res).Error
 	if err != nil {
 		return res, common.NewDBError(err)
 	}
@@ -134,9 +150,9 @@ func GetShareMetrics(shareId int64) ([]MetricsResult, error) {
 }
 
 func GetShareEntry(shareId int64) ([]*ShareRef, error) {
-	var entris []*ShareRef
-	if err := db.DB().Where("share_id = ? AND status = ?", shareId, db.Valid).Find(entris).Error; err != nil {
+	var entries []*ShareRef
+	if err := db.DB().Where("share_id = ? AND status = ?", shareId, db.Valid).Find(&entries).Error; err != nil {
 		return nil, common.NewDBError(err)
 	}
-	return entris, nil
+	return entries, nil
 }

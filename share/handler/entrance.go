@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/share/dao"
@@ -25,6 +26,12 @@ func (*EntranceHandler) ShareStatus(ctx context.Context, req *pb.ShareStatusRequ
 		return errors.New(config.ShareSrvName, "Share info not found", common.NotFoundError)
 	}
 
+	if info.ExpireTime != nil && info.ExpireTime.Before(time.Now()) {
+		if err := dao.CancelShare(info, db.Expired); err != nil {
+			return err
+		}
+	}
+
 	resp.Status = info.Status
 	resp.OwnerId = info.SharerId
 	resp.IsPublic = info.Privacy == dao.Public
@@ -44,11 +51,12 @@ func (*EntranceHandler) AccessShare(ctx context.Context, req *pb.AccessShareRequ
 		return errors.New(config.ShareSrvName, "Share info not found", common.NotFoundError)
 	}
 
-	if util.TokenMd5(code) != info.Code {
+	// permission check
+	if info.SharerId != viewerId && info.Privacy != dao.Public && util.TokenMd5(code) != info.Code {
 		return errors.New(config.ShareSrvName, "Error code", common.BadArgError)
 	}
 
-	at := service.NewAccessToken(info.SharerId, info.ID, viewerId)
+	at := service.NewAccessToken(info.ID, info.SharerId, viewerId)
 	if err := kv.Set(at.Token, at, 24*time.Hour); err != nil {
 		return err
 	}

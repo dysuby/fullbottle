@@ -39,7 +39,7 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 
 		// determine base folder
 		var baseFolder *dao.FolderInfo
-		if base == dao.RootId {
+		if base == 0 || base == dao.RootId {
 			baseFolder = dao.VirtualRoot()
 		} else {
 			f, err := dao.GetFolderById(ownerId, base)

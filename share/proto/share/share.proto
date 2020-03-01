@@ -91,7 +91,7 @@ message CreateShareResponse {
 }
 
 message UpdateShareRequest {
-    int64 id = 1;
+    string token = 1;
     int64 sharer_id = 2;
 
     string code = 3;
@@ -104,7 +104,7 @@ message UpdateShareResponse {
 }
 
 message CancelShareRequest {
-    int64 id = 1;
+    string token = 1;
     int64 sharer_id = 2;
 }
 

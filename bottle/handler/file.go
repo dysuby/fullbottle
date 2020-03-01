@@ -53,7 +53,7 @@ func (f *FileHandler) UpdateFile(ctx context.Context, req *pb.UpdateFileRequest,
 		return errors.New(config.BottleSrvName, "folder not found", common.NotFoundError)
 	}
 
-	subfiles, err := dao.GetFilesByFolderId(ownerId, folder.ID)
+	subfiles, err := dao.GetFilesByFolderId(ownerId, folder.ID, nil)
 	for _, subfile := range subfiles {
 		if file.Name == subfile.Name && file.ID != subfile.ID {
 			return errors.New(config.BottleSrvName, "Already a file with same name in parent folder", common.ConflictError)

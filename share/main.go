@@ -19,7 +19,7 @@ func options() []micro.Option {
 			gserver.MaxMsgSize(config.MaxMsgSize),
 		)),
 
-		micro.Name(config.BottleSrvName),
+		micro.Name(config.ShareSrvName),
 		micro.Version("latest"),
 
 		micro.Client(gclient.NewClient(

@@ -23,7 +23,7 @@ func (*ViewerHandler) GetShareInfo(ctx context.Context, req *pb.GetShareInfoRequ
 	info, err := dao.GetShareById(at.SharerId, at.Id)
 	if err != nil {
 		return err
-	} else if info != nil {
+	} else if info == nil {
 		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
 	}
 
@@ -34,7 +34,9 @@ func (*ViewerHandler) GetShareInfo(ctx context.Context, req *pb.GetShareInfoRequ
 
 	resp.Id = info.ID
 	resp.SharerId = info.SharerId
-	resp.Exp = info.ExpireTime.Unix()
+	if info.ExpireTime != nil {
+		resp.Exp = info.ExpireTime.Unix()
+	}
 	for _, m := range metrics {
 		if m.Action == dao.Download {
 			resp.DownloadTimes = m.Times
@@ -59,7 +61,7 @@ func (*ViewerHandler) GetShareFolder(ctx context.Context, req *pb.GetShareFolder
 	info, err := dao.GetShareById(at.SharerId, at.Id)
 	if err != nil {
 		return err
-	} else if info != nil {
+	} else if info == nil {
 		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
 	}
 
@@ -83,7 +85,7 @@ func (*ViewerHandler) GetShareDownloadUrl(ctx context.Context, req *pb.GetShareD
 	info, err := dao.GetShareById(at.SharerId, at.Id)
 	if err != nil {
 		return err
-	} else if info != nil {
+	} else if info == nil {
 		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
 	}
 

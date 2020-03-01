@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/share/dao"
 	pb "github.com/vegchic/fullbottle/share/proto/share"
@@ -22,9 +23,12 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 	folderIds := req.GetFolderIds()
 	fileIds := req.GetFileIds()
 
-	expire := time.Unix(exp, 0)
-	if !expire.IsZero() && expire.Before(time.Now()) {
-		return errors.New(config.ShareSrvName, "Invalid expire", common.BadArgError)
+	var expire time.Time
+	if exp != 0 {
+		expire = time.Unix(exp, 0)
+		if expire.Before(time.Now()) {
+			return errors.New(config.ShareSrvName, "Invalid expire: "+ expire.String(), common.BadArgError)
+		}
 	}
 
 	refs, err := service.ValidateEntries(ctx, sharerId, parentId, folderIds, fileIds)
@@ -39,14 +43,17 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 		} else if o != nil {
 			token = util.GenToken(10)
 		}
+		break
 	}
 
 	info := &dao.ShareInfo{
 		SharerId:       sharerId,
 		Token:          token,
-		ExpireTime:     &expire,
 		ParentFolderId: parentId,
 		ShareRefs:      refs,
+	}
+	if !expire.IsZero() {
+		info.ExpireTime = &expire
 	}
 	if !req.GetIsPublic() {
 		info.Privacy = dao.Private
@@ -63,43 +70,50 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 }
 
 func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareRequest, resp *pb.UpdateShareResponse) error {
-	id := req.GetId()
+	token := req.GetToken()
 	sharerId := req.GetSharerId()
 
 	code := req.GetCode()
 	exp := req.GetExp()
 
-	info, err := dao.GetShareById(sharerId, id)
+	info, err := dao.GetShareByToken(token)
 	if err != nil {
 		return err
-	} else if info == nil {
+	} else if info == nil || info.SharerId != sharerId {
 		return errors.New(config.ShareSrvName, "Share info not found", common.NotFoundError)
 	}
 
-	expire := time.Unix(exp, 0)
-	if !expire.IsZero() && expire.Before(time.Now()) {
-		return errors.New(config.ShareSrvName, "Invalid expire", common.BadArgError)
+	var expire time.Time
+	if exp != 0 {
+		expire = time.Unix(exp, 0)
+		if expire.Before(time.Now()) {
+			return errors.New(config.ShareSrvName, "Invalid expire: "+ expire.String(), common.BadArgError)
+		}
+	}
+	if !expire.IsZero() {
+		info.ExpireTime = &expire
 	}
 
-	info.ExpireTime = &expire
 	if !req.GetIsPublic() {
 		info.Privacy = dao.Private
 		info.Code = util.TokenMd5(code)
+	} else {
+		info.Privacy = dao.Public
 	}
 
 	return dao.UpdateShare(info)
 }
 
 func (*SharerHandler) CancelShare(ctx context.Context, req *pb.CancelShareRequest, resp *pb.CancelShareResponse) error {
-	id := req.GetId()
+	token := req.GetToken()
 	sharerId := req.GetSharerId()
 
-	info, err := dao.GetShareById(sharerId, id)
+	info, err := dao.GetShareByToken(token)
 	if err != nil {
 		return err
-	} else if info == nil {
+	} else if info == nil || info.SharerId != sharerId {
 		return errors.New(config.ShareSrvName, "Share info not found", common.NotFoundError)
 	}
 
-	return dao.CancelShare(info)
+	return dao.CancelShare(info, db.Canceled)
 }

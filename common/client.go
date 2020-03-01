@@ -7,6 +7,7 @@ import (
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
+	pbshare "github.com/vegchic/fullbottle/share/proto/share"
 )
 
 var (
@@ -27,4 +28,8 @@ func AuthSrvClient() pbauth.AuthService {
 
 func BottleSrvClient() pbbottle.BottleService {
 	return pbbottle.NewBottleService(config.BottleSrvName, c)
+}
+
+func ShareSrvClient() pbshare.ShareService {
+	return pbshare.NewShareService(config.ShareSrvName, c)
 }

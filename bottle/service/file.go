@@ -17,7 +17,7 @@ func CreateFile(file *dao.FileInfo, meta *dao.FileMeta) error {
 		return err
 	}
 	defer lock.Release()
-	files, err := dao.GetFilesByFolderId(file.OwnerId, file.FolderId,nil)
+	files, err := dao.GetFilesByFolderId(file.OwnerId, file.FolderId, nil)
 	if err != nil {
 		return err
 	}

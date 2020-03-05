@@ -30,7 +30,7 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
 	if err := kv.Get(key, user); err != nil {
-		user, err := dao.GetUsersById(uid)
+		user, err = dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {
@@ -92,9 +92,12 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 		return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 	}
 
-	fields := db.Fields{
-		"username": req.Username,
-		"password": util.PasswordCrypto(req.Password),
+	fields := db.Fields{}
+	if req.Username != "" {
+		fields["username"] = req.GetUsername()
+	}
+	if req.Password != "" {
+		fields["password"] = util.PasswordCrypto(req.GetPassword())
 	}
 
 	if err = dao.UpdateUser(user, fields); err != nil {
@@ -117,16 +120,18 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 		return errors.New(config.UserSrvName, "Password error", common.PasswordError)
 	}
 
+	expire := time.Now().Unix() + config.JwtTokenExpire
+
 	authClient := common.AuthSrvClient()
 	authResp, err := authClient.GenerateJwtToken(ctx, &pbauth.GenerateJwtTokenRequest{
 		UserId: user.ID,
-		Expire: config.JwtTokenExpire,
+		Expire: expire,
 	})
 	if err != nil {
 		return err
 	}
 
-	resp.Token, resp.Expire = authResp.GetToken(), config.JwtTokenExpire
+	resp.Token, resp.Expire, resp.Uid = authResp.GetToken(), expire, user.ID
 	return nil
 }
 
@@ -135,7 +140,7 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
 	if err := kv.Get(key, user); err != nil {
-		user, err := dao.GetUsersById(uid)
+		user, err = dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {

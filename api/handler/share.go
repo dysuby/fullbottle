@@ -16,10 +16,10 @@ func CreateShare(c *gin.Context) {
 	body := struct {
 		Code      string  `json:"code" bindings:"required"`
 		Exp       int64   `json:"exp" bindings:"required"`
-		ParentId  int64	   `json:"parent_id" bindings:"required"`
+		ParentId  int64   `json:"parent_id" bindings:"required"`
 		FileIds   []int64 `json:"file_ids" bindings:"required"`
 		FolderIds []int64 `json:"folder_ids" bindings:"required"`
-		IsPublic  bool 	  `json:"is_public" bindings:"required"`
+		IsPublic  bool    `json:"is_public" bindings:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -30,13 +30,13 @@ func CreateShare(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.CreateShare(util.RpcContext(c), &pbshare.CreateShareRequest{
-		SharerId:             uid,
-		Code:                 body.Code,
-		ParentId:             body.ParentId,
-		FolderIds:            body.FolderIds,
-		FileIds:              body.FileIds,
-		Exp:                  body.Exp,
-		IsPublic:             body.IsPublic,
+		SharerId:  uid,
+		Code:      body.Code,
+		ParentId:  body.ParentId,
+		FolderIds: body.FolderIds,
+		FileIds:   body.FileIds,
+		Exp:       body.Exp,
+		IsPublic:  body.IsPublic,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -47,21 +47,20 @@ func CreateShare(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"result": resp,
 	})
 }
-
 
 func UpdateShare(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 
 	body := struct {
-		Token     string   `json:"token" bindings:"required"`
-		Code      string  `json:"code" bindings:"required"`
-		Exp       int64   `json:"exp" bindings:"required"`
-		IsPublic  bool 	  `json:"is_public" bindings:"required"`
+		Token    string `json:"token" bindings:"required"`
+		Code     string `json:"code" bindings:"required"`
+		Exp      int64  `json:"exp" bindings:"required"`
+		IsPublic bool   `json:"is_public" bindings:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -72,11 +71,11 @@ func UpdateShare(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	_, err := shareClient.UpdateShare(util.RpcContext(c), &pbshare.UpdateShareRequest{
-		Token:                   body.Token,
-		SharerId:             uid,
-		Code:                 body.Code,
-		Exp:                  body.Exp,
-		IsPublic:             body.IsPublic,
+		Token:    body.Token,
+		SharerId: uid,
+		Code:     body.Code,
+		Exp:      body.Exp,
+		IsPublic: body.IsPublic,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -96,7 +95,7 @@ func CancelShare(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Token     string   `json:"token" bindings:"required"`
+		Token string `json:"token" bindings:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -107,8 +106,8 @@ func CancelShare(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	_, err := shareClient.CancelShare(util.RpcContext(c), &pbshare.CancelShareRequest{
-		Token:                   body.Token,
-		SharerId:             uid,
+		Token:    body.Token,
+		SharerId: uid,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -128,7 +127,7 @@ func ShareStatus(c *gin.Context) {
 	uid := u.(int64)
 
 	param := struct {
-		Token        string   `uri:"token" bindings:"required"`
+		Token string `uri:"token" bindings:"required"`
 	}{}
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -139,8 +138,8 @@ func ShareStatus(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.ShareStatus(util.RpcContext(c), &pbshare.ShareStatusRequest{
-		Token:                  param.Token,
-		ViewerId:             	uid,
+		Token:    param.Token,
+		ViewerId: uid,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -151,19 +150,18 @@ func ShareStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"status": resp,
 	})
 }
-
 
 func AccessShare(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 
 	body := struct {
-		Token        string   `json:"token"`
-		Code         string   `json:"code"`
+		Token string `json:"token"`
+		Code  string `json:"code"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -174,9 +172,9 @@ func AccessShare(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.AccessShare(util.RpcContext(c), &pbshare.AccessShareRequest{
-		Token:                   body.Token,
-		ViewerId:             	uid,
-		Code:					body.Code,
+		Token:    body.Token,
+		ViewerId: uid,
+		Code:     body.Code,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -187,17 +185,17 @@ func AccessShare(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":          "Success",
 		"access_token": resp.AccessToken,
 	})
 }
 
-func ShareInfo(c *gin.Context)  {
+func ShareInfo(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 
 	query := struct {
-		AccessToken        string   `form:"access_token"`
+		AccessToken string `form:"access_token"`
 	}{}
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -208,8 +206,8 @@ func ShareInfo(c *gin.Context)  {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.GetShareInfo(util.RpcContext(c), &pbshare.GetShareInfoRequest{
-		AccessToken:	query.AccessToken,
-		ViewerId:             	uid,
+		AccessToken: query.AccessToken,
+		ViewerId:    uid,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -220,7 +218,7 @@ func ShareInfo(c *gin.Context)  {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":  "Success",
 		"info": resp,
 	})
 }
@@ -230,8 +228,8 @@ func ShareEntry(c *gin.Context) {
 	uid := u.(int64)
 
 	query := struct {
-		AccessToken  string   `form:"access_token"`
-		Path         string   `form:"path"`
+		AccessToken string `form:"access_token"`
+		Path        string `form:"path"`
 	}{}
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -242,9 +240,9 @@ func ShareEntry(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.GetShareFolder(util.RpcContext(c), &pbshare.GetShareFolderRequest{
-		AccessToken:                   query.AccessToken,
-		ViewerId:             	uid,
-		Path:					query.Path,
+		AccessToken: query.AccessToken,
+		ViewerId:    uid,
+		Path:        query.Path,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
@@ -255,19 +253,18 @@ func ShareEntry(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"folder": resp.Folder,
 	})
 }
-
 
 func DownloadShareFile(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 	body := struct {
-		AccessToken        string   `json:"access_token"`
-		FileId int64 `json:"file_id" bindings:"file_id"`
-		Path         string   `json:"path"`
+		AccessToken string `json:"access_token"`
+		FileId      int64  `json:"file_id" bindings:"file_id"`
+		Path        string `json:"path"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -278,10 +275,10 @@ func DownloadShareFile(c *gin.Context) {
 
 	shareClient := common.ShareSrvClient()
 	resp, err := shareClient.GetShareDownloadUrl(util.RpcContext(c), &pbshare.GetShareDownloadUrlRequest{
-		AccessToken:          body.AccessToken,
-		FileId:               body.FileId,
-		Path:                 body.Path,
-		ViewerId:             uid,
+		AccessToken: body.AccessToken,
+		FileId:      body.FileId,
+		Path:        body.Path,
+		ViewerId:    uid,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())

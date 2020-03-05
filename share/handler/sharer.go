@@ -27,7 +27,7 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 	if exp != 0 {
 		expire = time.Unix(exp, 0)
 		if expire.Before(time.Now()) {
-			return errors.New(config.ShareSrvName, "Invalid expire: "+ expire.String(), common.BadArgError)
+			return errors.New(config.ShareSrvName, "Invalid expire: "+expire.String(), common.BadArgError)
 		}
 	}
 
@@ -87,7 +87,7 @@ func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareReques
 	if exp != 0 {
 		expire = time.Unix(exp, 0)
 		if expire.Before(time.Now()) {
-			return errors.New(config.ShareSrvName, "Invalid expire: "+ expire.String(), common.BadArgError)
+			return errors.New(config.ShareSrvName, "Invalid expire: "+expire.String(), common.BadArgError)
 		}
 	}
 	if !expire.IsZero() {

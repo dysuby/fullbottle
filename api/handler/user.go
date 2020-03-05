@@ -30,7 +30,7 @@ func GetUser(c *gin.Context) {
 	}
 
 	if userResp.Status == db.Invalid {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": "Invalid user",
 		})
 		return
@@ -79,8 +79,8 @@ func UpdateUser(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Username string `json:"username" binding:"required,max=24,min=4"`
-		Password string `json:"password" binding:"required,max=18,min=6"`
+		Username string `json:"username" binding:"max=24,min=4"`
+		Password string `json:"password" binding:"omitempty,max=18,min=6"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -97,7 +97,7 @@ func UpdateUser(c *gin.Context) {
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": e.Detail,
 		})
 		return
@@ -154,7 +154,7 @@ func UploadAvatar(c *gin.Context) {
 
 	if _, err = client.UploadUserAvatar(util.RpcContext(c), req); err != nil {
 		e := errors.Parse(err.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": e.Detail,
 		})
 		return
@@ -216,15 +216,9 @@ func UserLogin(c *gin.Context) {
 	resp, err := client.UserLogin(util.RpcContext(c), &pbuser.UserLoginRequest{Email: body.Email, Password: body.Password})
 	if err != nil {
 		e := errors.Parse(err.Error())
-		if e.Code == common.ExistedError {
-			c.AbortWithStatusJSON(http.StatusConflict, gin.H{
-				"msg": e.Detail,
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"msg": e.Detail,
-			})
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
 
 		return
 	}
@@ -232,5 +226,7 @@ func UserLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"msg":   "Success",
 		"token": resp.Token,
+		"expire": resp.Expire,
+		"uid":   resp.Uid,
 	})
 }

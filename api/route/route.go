@@ -50,15 +50,15 @@ func registerV1Routes(g *gin.Engine) {
 		api.POST("/space/download/file", handler.DownloadFile)
 
 		// share
-		api.POST("/share", handler.CreateShare)	// create share
-		api.PUT("/share/:token", handler.UpdateShare)	// modify share
-		api.DELETE("/share/:token", handler.CancelShare)		// cancel share
+		api.POST("/share", handler.CreateShare)          // create share
+		api.PUT("/share/:token", handler.UpdateShare)    // modify share
+		api.DELETE("/share/:token", handler.CancelShare) // cancel share
 
-		api.GET("/share/:token/status", handler.ShareStatus)		// get share status
-		api.POST("/share/:token/access", handler.AccessShare)	// try to access share
+		api.GET("/share/:token/status", handler.ShareStatus)  // get share status
+		api.POST("/share/:token/access", handler.AccessShare) // try to access share
 		api.GET("/share/:token/info", handler.ShareInfo)
-		api.GET("/share/:token", handler.ShareEntry)			// get share entries
-		api.POST("/share/:token/download", handler.DownloadShareFile)	// download
+		api.GET("/share/:token", handler.ShareEntry)                  // get share entries
+		api.POST("/share/:token/download", handler.DownloadShareFile) // download
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

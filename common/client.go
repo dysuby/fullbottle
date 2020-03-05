@@ -6,8 +6,8 @@ import (
 
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
-	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 	pbshare "github.com/vegchic/fullbottle/share/proto/share"
+	pbuser "github.com/vegchic/fullbottle/user/proto/user"
 )
 
 var (

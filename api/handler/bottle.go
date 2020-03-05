@@ -48,7 +48,7 @@ func GetFolder(c *gin.Context) {
 	if query.FolderId != 0 {
 		req = &pbbottle.GetFolderInfoRequest{Ident: &pbbottle.GetFolderInfoRequest_FolderId{FolderId: query.FolderId}}
 	} else {
-		req = &pbbottle.GetFolderInfoRequest{Ident: &pbbottle.GetFolderInfoRequest_Path_{Path: &pbbottle.GetFolderInfoRequest_Path{Relative:query.Path}}}
+		req = &pbbottle.GetFolderInfoRequest{Ident: &pbbottle.GetFolderInfoRequest_Path_{Path: &pbbottle.GetFolderInfoRequest_Path{Relative: query.Path}}}
 	}
 	req.OwnerId = uid
 	bottleClient := common.BottleSrvClient()

@@ -29,10 +29,9 @@ func (a *JwtHandler) GenerateJwtToken(ctx context.Context, req *pb.GenerateJwtTo
 		clientIp = ip
 	}
 
-	expireTime := time.Now().Unix() + req.Expire
 	claims := Claims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expireTime,
+			ExpiresAt: req.Expire,
 			Id:        fmt.Sprint(req.GetUserId()),
 			IssuedAt:  time.Now().Unix(),
 			Issuer:    config.AppIss,

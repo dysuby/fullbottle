@@ -109,15 +109,15 @@ func (*ViewerHandler) GetShareDownloadUrl(ctx context.Context, req *pb.GetShareD
 	}
 
 	bottleClient := common.BottleSrvClient()
-	fileResp, err := bottleClient.GetDownloadUrl(ctx, &pbbottle.GetDownloadUrlRequest{OwnerId:info.SharerId, FileId:fileId})
+	fileResp, err := bottleClient.GetDownloadUrl(ctx, &pbbottle.GetDownloadUrlRequest{OwnerId: info.SharerId, FileId: fileId})
 	if err != nil {
 		return err
 	}
 
 	metric := &dao.ShareMetrics{
-		ShareId:    info.ID,
-		ViewerId:   viewerId,
-		Action:     dao.Download,
+		ShareId:  info.ID,
+		ViewerId: viewerId,
+		Action:   dao.Download,
 	}
 	err = dao.CreateShareMetrics(metric)
 	if err != nil {

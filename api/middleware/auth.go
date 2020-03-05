@@ -27,7 +27,7 @@ func LoginRequired() gin.HandlerFunc {
 
 		if err != nil {
 			e := errors.Parse(err.Error())
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"msg": e.Detail,
 			})
 			return

@@ -26,7 +26,7 @@ type ShareInfo struct {
 	db.BasicModel
 	SharerId       int64       `gorm:"not null"`
 	Token          string      `gorm:"type:varchar(256);unique;not null"` // identifier
-	Code           string      `gorm:"type:varchar(64);not null"`        // access code, empty means public share
+	Code           string      `gorm:"type:varchar(64);not null"`         // access code, empty means public share
 	Privacy        int32       `gorm:"type:smallint;not null;default:1"`
 	ParentFolderId int64       `gorm:"not null"` // all share objects' parent
 	ExpireTime     *time.Time  `gorm:""`

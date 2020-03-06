@@ -220,3 +220,34 @@ func RemoveFile(c *gin.Context) {
 		"msg": "Success",
 	})
 }
+
+func GetFolderParents(c *gin.Context) {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
+	query := struct {
+		FolderId int64  `form:"folder_id" bindings:"required"`
+	}{}
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid args",
+		})
+		return
+	}
+
+	bottleClient := common.BottleSrvClient()
+	resp, err := bottleClient.GetEntryParents(util.RpcContext(c), &pbbottle.GetEntryParentsRequest{OwnerId:uid,
+		EntryId:&pbbottle.GetEntryParentsRequest_FolderId{FolderId:query.FolderId}})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Success",
+		"parents": resp.Parents,
+	})
+}

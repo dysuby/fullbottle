@@ -48,6 +48,7 @@ type BottleService interface {
 	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error)
 	GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, opts ...client.CallOption) (*GetDownloadUrlResponse, error)
 	ValidateEntry(ctx context.Context, in *ValidateEntryRequest, opts ...client.CallOption) (*ValidateEntryResponse, error)
+	GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, opts ...client.CallOption) (*GetEntryParentsResponse, error)
 }
 
 type bottleService struct {
@@ -202,6 +203,16 @@ func (c *bottleService) ValidateEntry(ctx context.Context, in *ValidateEntryRequ
 	return out, nil
 }
 
+func (c *bottleService) GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, opts ...client.CallOption) (*GetEntryParentsResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GetEntryParents", in)
+	out := new(GetEntryParentsResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for BottleService service
 
 type BottleServiceHandler interface {
@@ -219,6 +230,7 @@ type BottleServiceHandler interface {
 	UploadFile(context.Context, *UploadFileRequest, *UploadFileResponse) error
 	GetDownloadUrl(context.Context, *GetDownloadUrlRequest, *GetDownloadUrlResponse) error
 	ValidateEntry(context.Context, *ValidateEntryRequest, *ValidateEntryResponse) error
+	GetEntryParents(context.Context, *GetEntryParentsRequest, *GetEntryParentsResponse) error
 }
 
 func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, opts ...server.HandlerOption) error {
@@ -237,6 +249,7 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error
 		GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, out *GetDownloadUrlResponse) error
 		ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error
+		GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, out *GetEntryParentsResponse) error
 	}
 	type BottleService struct {
 		bottleService
@@ -303,4 +316,8 @@ func (h *bottleServiceHandler) GetDownloadUrl(ctx context.Context, in *GetDownlo
 
 func (h *bottleServiceHandler) ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error {
 	return h.BottleServiceHandler.ValidateEntry(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, out *GetEntryParentsResponse) error {
+	return h.BottleServiceHandler.GetEntryParents(ctx, in, out)
 }

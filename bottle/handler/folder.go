@@ -31,7 +31,12 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 	var err error
 	switch req.GetIdent().(type) {
 	case *pb.GetFolderInfoRequest_FolderId:
-		folder, err = dao.GetFolderById(ownerId, req.GetFolderId())
+		folderId := req.GetFolderId()
+		if folderId == 0 || folderId == dao.RootId {
+			folder = dao.VirtualRoot()
+		} else {
+			folder, err = dao.GetFolderById(ownerId, req.GetFolderId())
+		}
 	case *pb.GetFolderInfoRequest_Path_:
 		path := req.GetPath()
 		base := path.GetBaseFolder()

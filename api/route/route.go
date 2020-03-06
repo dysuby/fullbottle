@@ -36,10 +36,12 @@ func registerV1Routes(g *gin.Engine) {
 
 		// space
 		api.GET("/space/meta", handler.GetSpaceMeta)
-		api.GET("/space/folders", handler.GetFolder) // ?name=&path=
+		api.GET("/space/folders", handler.GetFolder) // ?folder_id=&path=
 		api.POST("/space/folders", handler.CreateFolder)
 		api.PUT("/space/folders", handler.UpdateFolder)
 		api.DELETE("/space/folders", handler.RemoveFolder)
+
+		api.GET("/space/folders/parents", handler.GetFolderParents)
 
 		api.PUT("/space/files", handler.UpdateFile)
 		api.DELETE("/space/files", handler.RemoveFile)

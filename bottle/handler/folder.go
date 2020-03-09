@@ -81,7 +81,7 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 	}
 
 	f := &pb.FolderInfo{
-		FolderId:   folder.ID,
+		Id:         folder.ID,
 		Name:       folder.Name,
 		ParentId:   folder.ParentId,
 		CreateTime: folder.CreateTime.Unix(),
@@ -105,7 +105,7 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 	f.Folders = make([]*pb.FolderInfo, len(folders))
 	for i, v := range folders {
 		f.Folders[i] = &pb.FolderInfo{
-			FolderId:   v.ID,
+			Id:         v.ID,
 			Name:       v.Name,
 			ParentId:   v.ParentId,
 			CreateTime: v.CreateTime.Unix(),

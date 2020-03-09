@@ -1,8 +1,10 @@
 package util
 
 import (
+	"bytes"
 	"github.com/gin-gonic/gin"
 	"io"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -25,4 +27,24 @@ func DetectContentType(c *gin.Context, f io.ReadSeeker) string {
 	}
 
 	return filetype
+}
+
+func ReadFileBytes(c *gin.Context, fh *multipart.FileHeader) []byte {
+	f, err := fh.Open()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid file chunk",
+		})
+		return nil
+	}
+	defer f.Close()
+
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, f); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Copy chunk failed",
+		})
+		return nil
+	}
+	return buf.Bytes()
 }

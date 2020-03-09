@@ -19,7 +19,7 @@ const JwtTokenExpire = int64(60 * 60 * 24)
 const AvatarMaxSize = 1 << 20 // 1mb
 
 const DefaultCapacity = 1 << 30 // 1GB
-const DefaultChunkSize = 4 << 20
+const DefaultChunkSize = 1 << 20
 
 const (
 	MaxMsgSendSize = 64 << 20 // client

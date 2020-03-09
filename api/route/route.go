@@ -48,6 +48,8 @@ func registerV1Routes(g *gin.Engine) {
 
 		api.POST("/space/upload/token", handler.GetUploadToken) // ask for token
 		api.POST("/space/upload/file", handler.UploadFile)      // upload file
+		api.GET("/space/upload/file", handler.GetUploadedFileChunks)
+		api.DELETE("/space/upload/file", handler.CancelFileUpload)
 
 		api.POST("/space/download/file", handler.DownloadFile)
 

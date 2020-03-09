@@ -61,13 +61,13 @@ func (*EntryHandler) GetEntryParents(ctx context.Context, req *pb.GetEntryParent
 		return errors.New(config.BottleSrvName, "Folder not found", common.NotFoundError)
 	}
 
-	resp.Parents = append(resp.Parents, &pb.GetEntryParentsResponseSimpleParent{FolderId:folder.ID, Name:folder.Name})	// add self to result
+	resp.Parents = append(resp.Parents, &pb.GetEntryParentsResponseSimpleParent{FolderId: folder.ID, Name: folder.Name}) // add self to result
 	for folder.ParentId != dao.RootId {
 		folder, err = dao.GetFolderById(ownerId, folder.ParentId)
 		if err != nil {
 			return err
 		}
-		resp.Parents = append([]*pb.GetEntryParentsResponseSimpleParent{{FolderId:folder.ID, Name:folder.Name}}, resp.Parents...)
+		resp.Parents = append([]*pb.GetEntryParentsResponseSimpleParent{{FolderId: folder.ID, Name: folder.Name}}, resp.Parents...)
 	}
 
 	return nil

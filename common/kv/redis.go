@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"errors"
 	"github.com/go-redis/redis/v7"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
@@ -23,12 +22,16 @@ func init() {
 	})
 }
 
+func C() *redis.Client {
+	return client
+}
+
 type Marshaller interface {
 	Marshal() ([]byte, error)
 	Unmarshal([]byte) error
 }
 
-func Get(key string, m Marshaller) error {
+func GetM(key string, m Marshaller) error {
 	if raw, err := client.Get(key).Bytes(); err == nil {
 		if err = m.Unmarshal(raw); err != nil {
 			log.WithError(err).Infof("Unmarshal failed")
@@ -36,14 +39,14 @@ func Get(key string, m Marshaller) error {
 		}
 		return nil
 	} else if err == redis.Nil {
-		return common.NewRedisError(errors.New("record not found"))
+		return common.NewRedisError(err)
 	} else {
 		log.WithError(err).Infof("Redis failed")
 		return common.NewRedisError(err)
 	}
 }
 
-func Set(key string, m Marshaller, exp time.Duration) error {
+func SetM(key string, m Marshaller, exp time.Duration) error {
 	if b, err := m.Marshal(); err != nil {
 		log.WithError(err).Infof("Marshal failed")
 		return common.NewRedisError(err)
@@ -54,7 +57,7 @@ func Set(key string, m Marshaller, exp time.Duration) error {
 	return nil
 }
 
-func RefreshValue(key string, m Marshaller) error {
+func RefreshMValue(key string, m Marshaller) error {
 	if b, err := m.Marshal(); err != nil {
 		log.WithError(err).Infof("Marshal failed")
 		return common.NewRedisError(err)

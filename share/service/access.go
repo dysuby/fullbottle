@@ -21,7 +21,7 @@ type AccessToken struct {
 
 func (at *AccessToken) init() {
 	raw := fmt.Sprintf("%d:%d:%d:%d", at.Id, at.SharerId, at.ViewerId, time.Now().Unix())
-	at.Token = util.TokenMd5(raw)
+	at.Token = util.Md5(raw)
 }
 
 func (at *AccessToken) Marshal() ([]byte, error) {
@@ -60,7 +60,7 @@ func NewAccessToken(id, sharerId, viewerId int64) *AccessToken {
 
 func ValidateAccessToken(token string, viewerId int64) (AccessToken, error) {
 	var at AccessToken
-	if err := kv.Get(token, &at); err != nil {
+	if err := kv.GetM(token, &at); err != nil {
 		return at, err
 	}
 

@@ -16,7 +16,9 @@ const (
 	BadArgError
 
 	FileFetchError
-	FileUploadError
+	FileUploadingError
+	ChunkUploadedError
+	FileFailError
 
 	DBConnError
 	InternalError

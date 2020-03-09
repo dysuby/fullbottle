@@ -1,18 +1,27 @@
 package weed
 
 import (
-	"github.com/micro/go-micro/v2/errors"
+	"errors"
 	"github.com/vegchic/fullbottle/common"
-	"github.com/vegchic/fullbottle/config"
 	"net/http"
 	"net/url"
 	"strconv"
 )
 
-func FetchFile(fid string, volumeUrl string) (resp *http.Response, err error) {
+func FetchFile(fid string) (resp *http.Response, err error) {
+	f, err := ParseFid(fid)
+	if err != nil {
+		return nil, common.NewWeedError(errors.New("invalid avatar fid"))
+	}
+
+	volume, err := LookupVolume(f.VolumeId)
+	if err != nil {
+		return nil, err
+	}
+
 	base := url.URL{
 		Scheme: "http",
-		Host:   volumeUrl,
+		Host:   volume.Locations[0].Url,
 		Path:   fid,
 	}
 
@@ -21,7 +30,7 @@ func FetchFile(fid string, volumeUrl string) (resp *http.Response, err error) {
 		return nil, common.NewWeedError(err)
 	}
 	if !IsSuccessStatus(resp.StatusCode) {
-		return nil, errors.New(config.WeedName, "weed return unexpected statuscode: "+strconv.Itoa(resp.StatusCode), common.WeedError)
+		return nil, common.NewWeedError(errors.New("weed return unexpected statuscode: "+strconv.Itoa(resp.StatusCode)))
 	}
 	return
 }

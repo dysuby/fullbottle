@@ -1,8 +1,6 @@
 package util
 
 import (
-	"crypto/md5"
-	"fmt"
 	"math/rand"
 	"time"
 	"unsafe"
@@ -34,8 +32,4 @@ func GenToken(n int) string {
 		remain--
 	}
 	return *(*string)(unsafe.Pointer(&b))
-}
-
-func TokenMd5(token string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(token)))
 }

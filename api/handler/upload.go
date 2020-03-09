@@ -1,15 +1,14 @@
 package handler
 
 import (
-	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/api/util"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
-	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 )
 
 func GetUploadToken(c *gin.Context) {
@@ -26,6 +25,13 @@ func GetUploadToken(c *gin.Context) {
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
+		})
+		return
+	}
+
+	if !strings.Contains(body.Mime, "/") {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid mime type",
 		})
 		return
 	}
@@ -75,10 +81,14 @@ func GetUploadToken(c *gin.Context) {
 }
 
 func UploadFile(c *gin.Context) {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
 	body := struct {
-		FilePart *multipart.FileHeader `form:"file_part"`
-		Token    string                `form:"token" bindings:"required"`
-		Offset   int64                 `form:"offset" bindings:"required"`
+		File      *multipart.FileHeader `form:"file"`
+		Token     string                `form:"token" bindings:"required"`
+		Offset    int64                 `form:"offset" bindings:"required"`
+		ChunkHash string                `form:"chunk_hash" bindings:"required"`
 	}{}
 	if err := c.ShouldBind(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -86,36 +96,53 @@ func UploadFile(c *gin.Context) {
 		})
 		return
 	}
-	var b []byte
-	if body.FilePart != nil {
-		f, err := body.FilePart.Open()
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"msg": "Invalid file",
+	bottleClient := common.BottleSrvClient()
+	uploadedResp, err := bottleClient.GetFileUploadedChunks(util.RpcContext(c), &pbbottle.GetFileUploadedChunksRequest{Token: body.Token, OwnerId:uid})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
+		return
+	}
+	for _, offset := range uploadedResp.Uploaded {
+		if offset == body.Offset {
+			c.JSON(http.StatusCreated, gin.H{
+				"msg": "The chunk has been uploaded",
+				"result": gin.H{
+					"uploaded": uploadedResp.Uploaded,
+					"need_upload": uploadedResp.NeedUpload,
+				},
 			})
 			return
 		}
-		defer f.Close()
-
-		buf := bytes.NewBuffer(nil)
-		if _, err := io.Copy(buf, f); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"msg": "Invalid file",
-			})
-			return
-		}
-		b = buf.Bytes()
 	}
 
-	bottleClient := common.BottleSrvClient()
+	var b []byte
+	if body.File != nil {
+		b = util.ReadFileBytes(c, body.File)
+		if c.IsAborted() {
+			return
+		}
+	}
+
 	req := &pbbottle.UploadFileRequest{
 		Token:  body.Token,
+		OwnerId:uid,
 		Offset: body.Offset,
 		Raw:    b,
+		ChunkHash:body.ChunkHash,
 	}
 	resp, err := bottleClient.UploadFile(util.RpcContext(c), req)
 	if err != nil {
 		e := errors.Parse(err.Error())
+		if e.Code == common.FileFailError {
+			// todo use a better status code
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"msg": e.Detail,
+			})
+			return
+		}
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"msg": e.Detail,
 		})
@@ -128,5 +155,64 @@ func UploadFile(c *gin.Context) {
 			"status":   resp.Status,
 			"uploaded": resp.Uploaded,
 		},
+	})
+}
+
+func GetUploadedFileChunks(c *gin.Context) {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
+	query := struct {
+		Token string `form:"token" bindings:"required"`
+	}{}
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid token",
+		})
+		return
+	}
+	bottleClient := common.BottleSrvClient()
+	resp, err := bottleClient.GetFileUploadedChunks(util.RpcContext(c), &pbbottle.GetFileUploadedChunksRequest{Token: query.Token, OwnerId:uid})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Success",
+		"result": gin.H{
+			"uploaded": resp.Uploaded,
+			"need_upload": resp.NeedUpload,
+		},
+	})
+}
+
+func CancelFileUpload(c *gin.Context) {
+	u, _ := c.Get("cur_user_id")
+	uid := u.(int64)
+
+	body := struct {
+		Token    string                `form:"token" bindings:"required"`
+	}{}
+	if err := c.ShouldBind(&body); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid token",
+		})
+		return
+	}
+	bottleClient := common.BottleSrvClient()
+	_, err := bottleClient.CancelFileUpload(util.RpcContext(c), &pbbottle.CancelFileUploadRequest{Token:body.Token, OwnerId:uid})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": e.Detail,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Success",
 	})
 }

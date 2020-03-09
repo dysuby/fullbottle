@@ -151,7 +151,7 @@ func ShareStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"msg":    "Success",
-		"status": resp,
+		"result": resp,
 	})
 }
 
@@ -185,8 +185,10 @@ func AccessShare(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":          "Success",
-		"access_token": resp.AccessToken,
+		"msg": "Success",
+		"result": gin.H{
+			"access_token": resp.AccessToken,
+		},
 	})
 }
 
@@ -218,8 +220,8 @@ func ShareInfo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "Success",
-		"info": resp,
+		"msg":    "Success",
+		"result": resp,
 	})
 }
 
@@ -254,7 +256,7 @@ func ShareEntry(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"msg":    "Success",
-		"folder": resp.Folder,
+		"result": resp.Folder,
 	})
 }
 

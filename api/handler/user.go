@@ -9,7 +9,6 @@ import (
 	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 	pbuser "github.com/vegchic/fullbottle/user/proto/user"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -37,8 +36,8 @@ func GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "Success",
-		"user": userResp,
+		"msg":    "Success",
+		"result": userResp,
 	})
 }
 
@@ -138,11 +137,8 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	fbytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Error appears when operating image: " + err.Error(),
-		})
+	fbytes := util.ReadFileBytes(c, header)
+	if c.IsAborted() {
 		return
 	}
 
@@ -224,9 +220,11 @@ func UserLogin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":   "Success",
-		"token": resp.Token,
-		"expire": resp.Expire,
-		"uid":   resp.Uid,
+		"msg": "Success",
+		"result": gin.H{
+			"token":  resp.Token,
+			"expire": resp.Expire,
+			"uid":    resp.Uid,
+		},
 	})
 }

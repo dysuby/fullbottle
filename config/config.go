@@ -21,6 +21,9 @@ type Config struct {
 
 	App struct {
 		Secret string
+		Upload struct {
+			Secret string
+		}
 	}
 
 	Weed struct {

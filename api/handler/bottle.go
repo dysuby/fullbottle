@@ -24,8 +24,8 @@ func GetSpaceMeta(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "Success",
-		"meta": resp,
+		"msg":    "Success",
+		"result": resp,
 	})
 }
 
@@ -63,7 +63,7 @@ func GetFolder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"msg":    "Success",
-		"folder": resp.Folder,
+		"result": resp.Folder,
 	})
 
 }
@@ -73,7 +73,7 @@ func CreateFolder(c *gin.Context) {
 	uid := u.(int64)
 
 	req := struct {
-		Name     string `json:"name" binding:"required,max=10,min=1"`
+		Name     string `json:"name" binding:"required,max=100,min=1"`
 		ParentId int64  `json:"parent_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,8 +94,8 @@ func CreateFolder(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":      "Success",
-		"folderId": resp.GetFolderId(),
+		"msg":    "Success",
+		"result": resp,
 	})
 }
 
@@ -105,7 +105,7 @@ func UpdateFolder(c *gin.Context) {
 
 	body := struct {
 		FolderId int64  `json:"folder_id" bindings:"required"`
-		Name     string `json:"name" binding:"required,max=10,min=1"`
+		Name     string `json:"name" binding:"required,max=100,min=1"`
 		ParentId int64  `json:"parent_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -167,7 +167,7 @@ func UpdateFile(c *gin.Context) {
 	body := struct {
 		FileId   int64  `json:"file_id" bindings:"required"`
 		FolderId int64  `json:"folder_id" bindings:"required"`
-		Name     string `json:"name" binding:"required,max=10,min=1"`
+		Name     string `json:"name" binding:"required,max=100,min=1"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -226,7 +226,7 @@ func GetFolderParents(c *gin.Context) {
 	uid := u.(int64)
 
 	query := struct {
-		FolderId int64  `form:"folder_id" bindings:"required"`
+		FolderId int64 `form:"folder_id" bindings:"required"`
 	}{}
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -236,8 +236,8 @@ func GetFolderParents(c *gin.Context) {
 	}
 
 	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.GetEntryParents(util.RpcContext(c), &pbbottle.GetEntryParentsRequest{OwnerId:uid,
-		EntryId:&pbbottle.GetEntryParentsRequest_FolderId{FolderId:query.FolderId}})
+	resp, err := bottleClient.GetEntryParents(util.RpcContext(c), &pbbottle.GetEntryParentsRequest{OwnerId: uid,
+		EntryId: &pbbottle.GetEntryParentsRequest_FolderId{FolderId: query.FolderId}})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -248,6 +248,6 @@ func GetFolderParents(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "Success",
-		"parents": resp.Parents,
+		"result": resp.Parents,
 	})
 }

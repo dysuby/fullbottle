@@ -52,12 +52,12 @@ func (*EntranceHandler) AccessShare(ctx context.Context, req *pb.AccessShareRequ
 	}
 
 	// permission check
-	if info.SharerId != viewerId && info.Privacy != dao.Public && util.TokenMd5(code) != info.Code {
+	if info.SharerId != viewerId && info.Privacy != dao.Public && util.Md5(code) != info.Code {
 		return errors.New(config.ShareSrvName, "Error code", common.BadArgError)
 	}
 
 	at := service.NewAccessToken(info.ID, info.SharerId, viewerId)
-	if err := kv.Set(at.Token, at, 24*time.Hour); err != nil {
+	if err := kv.SetM(at.Token, at, 24*time.Hour); err != nil {
 		return err
 	}
 

@@ -15,7 +15,7 @@ import (
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/user/dao"
 	pb "github.com/vegchic/fullbottle/user/proto/user"
-	"github.com/vegchic/fullbottle/user/util"
+	"github.com/vegchic/fullbottle/util"
 	"github.com/vegchic/fullbottle/weed"
 	"io/ioutil"
 	"time"
@@ -29,14 +29,14 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 	uid := req.GetUid()
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
-	if err := kv.Get(key, user); err != nil {
+	if err := kv.GetM(key, user); err != nil {
 		user, err = dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {
 			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 		}
-		_ = kv.Set(key, user, 24*time.Hour)
+		_ = kv.SetM(key, user, 24*time.Hour)
 	}
 
 	resp.Uid = user.ID
@@ -64,7 +64,7 @@ func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest,
 	user := &dao.User{
 		Email:    req.Email,
 		Username: req.Username,
-		Password: util.PasswordCrypto(req.Password),
+		Password: util.Bcrypt(req.Password),
 	}
 
 	err := dao.CreateUser(user)
@@ -78,7 +78,7 @@ func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest,
 		log.WithError(err).Errorf("Cannot init user bottle")
 	}
 
-	_ = kv.Get(fmt.Sprintf(UserInfoKey, user.ID), user)
+	_ = kv.GetM(fmt.Sprintf(UserInfoKey, user.ID), user)
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (u *UserHandler) ModifyUser(ctx context.Context, req *pb.ModifyUserRequest,
 		fields["username"] = req.GetUsername()
 	}
 	if req.Password != "" {
-		fields["password"] = util.PasswordCrypto(req.GetPassword())
+		fields["password"] = util.Bcrypt(req.GetPassword())
 	}
 
 	if err = dao.UpdateUser(user, fields); err != nil {
@@ -116,7 +116,7 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 		return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 	}
 
-	if pass := util.ComparePassword(user.Password, req.Password); !pass {
+	if pass := util.BcryptCompare(user.Password, req.Password); !pass {
 		return errors.New(config.UserSrvName, "Password error", common.PasswordError)
 	}
 
@@ -139,14 +139,14 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 	uid := req.GetUid()
 	user := &dao.User{}
 	key := fmt.Sprintf(UserInfoKey, uid)
-	if err := kv.Get(key, user); err != nil {
+	if err := kv.GetM(key, user); err != nil {
 		user, err = dao.GetUsersById(uid)
 		if err != nil {
 			return err
 		} else if user == nil {
 			return errors.New(config.UserSrvName, "User not found", common.NotFoundError)
 		}
-		_ = kv.Set(key, user, 24*time.Hour)
+		_ = kv.SetM(key, user, 24*time.Hour)
 	}
 
 	avatarFid := user.AvatarFid
@@ -154,16 +154,7 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 		return errors.New(config.UserSrvName, "User has no avatar", common.EmptyAvatarError)
 	}
 
-	fid, err := weed.ParseFid(avatarFid)
-	if err != nil {
-		return errors.New(config.UserSrvName, "Invalid avatar fid", common.InternalError)
-	}
-
-	volume, err := weed.LookupVolume(fid.VolumeId)
-	if err != nil {
-		return err
-	}
-	avatarResp, err := weed.FetchFile(avatarFid, volume.Locations[0].Url)
+	avatarResp, err := weed.FetchFile(avatarFid)
 	if err != nil {
 		return err
 	}

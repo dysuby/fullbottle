@@ -89,7 +89,7 @@ func AssignFileKey() (*FileKeyInfo, error) {
 func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
 	v := &VolumeLookupInfo{}
 	key := fmt.Sprintf(VolumeCacheKey, volumeId)
-	if err := kv.Get(key, v); err == nil {
+	if err := kv.GetM(key, v); err == nil {
 		return v, nil
 	}
 
@@ -98,7 +98,7 @@ func LookupVolume(volumeId string) (*VolumeLookupInfo, error) {
 		return nil, err
 	}
 
-	if err := kv.Set(key, res, 24*time.Hour); err != nil {
+	if err := kv.SetM(key, res, 24*time.Hour); err != nil {
 		return nil, err
 	}
 	return res, nil

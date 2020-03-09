@@ -57,7 +57,7 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 	}
 	if !req.GetIsPublic() {
 		info.Privacy = dao.Private
-		info.Code = util.TokenMd5(code)
+		info.Code = util.Md5(code)
 	}
 	err = dao.InitShare(info)
 	if err != nil {
@@ -96,7 +96,7 @@ func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareReques
 
 	if !req.GetIsPublic() {
 		info.Privacy = dao.Private
-		info.Code = util.TokenMd5(code)
+		info.Code = util.Md5(code)
 	} else {
 		info.Privacy = dao.Public
 	}

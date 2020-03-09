@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/micro/go-micro/v2/errors"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
 	"io"
 	"mime/multipart"
@@ -13,6 +14,10 @@ import (
 )
 
 func UploadSingleFile(f io.Reader, name string, fid string, volumeUrl string, isManifest bool) (resp *http.Response, err error) {
+	defer func() {
+		log.Infof("Weed: upload fid: %s, err = %v", fid, err)
+	}()
+
 	// read
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

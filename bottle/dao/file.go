@@ -42,6 +42,19 @@ func GetFileById(ownerId, id int64) (*FileInfo, error) {
 	return &file, nil
 }
 
+func GetFileByUploadMeta(ownerId int64, filename string, folderId int64, metaId int64) (*FileInfo, error) {
+	var file FileInfo
+	if err := db.DB().Where("name = ? AND folder_id = ? AND file_id = ? AND owner_id = ? AND status = ?",
+		filename, folderId, metaId, ownerId, db.Valid).First(&file).Error; err != nil {
+
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, common.NewDBError(err)
+	}
+	return &file, nil
+}
+
 func GetFilesByFolderId(ownerId, folderId int64, filterFiles []int64) ([]*FileInfo, error) {
 	// TODO check result
 	var files []*FileInfo

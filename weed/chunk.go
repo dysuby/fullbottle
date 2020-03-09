@@ -4,11 +4,18 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/util"
+	"sort"
+	"strings"
+	"time"
 )
+
+const ChunkHashKey = "chunk:token=%s;offset=%d"
 
 type ChunkInfo struct {
 	Fid    string `json:"fid"`
@@ -60,7 +67,7 @@ type FileUploadMeta struct {
 
 func (f *FileUploadMeta) init() {
 	raw := fmt.Sprintf("%d:%s:%d:%s", f.OwnerId, f.Name, f.FolderId, f.Hash)
-	f.Token = util.TokenMd5(raw)
+	f.Token = util.Sha256(raw, config.C().App.Upload.Secret)
 }
 
 func (f *FileUploadMeta) SetStatus(s int) {
@@ -96,7 +103,7 @@ func (f *FileUploadMeta) Unmarshal(b []byte) error {
 }
 
 // always upload in chunk, just make it simple
-func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
+func (f *FileUploadMeta) Upload(raw []byte, offset int64, hash string) error {
 	// if done, return
 	if f.Status == WeedDone || f.Status == DBDone {
 		return nil
@@ -119,11 +126,17 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
 		}
 
 		// add chunk info
-		f.Chunks = append(f.Chunks, &ChunkInfo{
+		chunk := &ChunkInfo{
 			Fid:    key.Fid,
 			Offset: offset,
 			Size:   reader.Size(),
-		})
+		}
+
+		if err := f.StoreChunkHash(chunk, hash); err != nil {
+			// TODO delete chunk from weed
+			return err
+		}
+		f.Chunks = append(f.Chunks, chunk)
 
 		// calculate if upload step is finish
 		uploaded := int64(0)
@@ -137,6 +150,16 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
 
 	// if in manifest step
 	if f.Status == Manifest {
+		// if file hash incorrect, clear all chunks
+		if err := f.CheckFileHash(); err != nil {
+			f.SetStatus(Uploading)
+			for _, c := range f.Chunks {
+				_ = DeleteFile(c.Fid)
+			}
+			f.Chunks = make([]*ChunkInfo, 0)
+			return err
+		}
+
 		// upload
 		key, err := AssignFileKey()
 		if err != nil {
@@ -158,12 +181,72 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64) error {
 	return nil
 }
 
-func (f *FileUploadMeta) UploadedChunk() []int32 {
-	var ranges []int32
+func (f *FileUploadMeta) UploadedChunk() []int64 {
+	var ranges []int64
 	for _, c := range f.Chunks {
-		ranges = append(ranges, int32(c.Offset/f.ChunkSize))
+		ranges = append(ranges, c.Offset)
 	}
 	return ranges
+}
+
+func (f *FileUploadMeta) CheckChunkOffset(offset int64, size int64) (uploaded bool, err error) {
+	if offset >= f.Size {
+		return false, common.NewWeedError(errors.New("invalid offset"))
+	}
+
+	for _, c := range f.Chunks {
+		if c.Offset == offset {
+			return true, nil
+		}
+	}
+
+	if size != f.ChunkSize && offset+size < f.Size {
+		return false, common.NewWeedError(errors.New("invalid chunk size"))
+	}
+	return false, nil
+}
+
+func (f *FileUploadMeta) StoreChunkHash(chunk *ChunkInfo, hash string) error {
+	client := kv.C()
+	if err := client.Set(fmt.Sprintf(ChunkHashKey, f.Token, chunk.Offset), hash, 15*24*time.Hour).Err(); err != nil {
+		return common.NewRedisError(err)
+	}
+	return nil
+}
+
+func (f *FileUploadMeta) GetChunkHashFromCache(chunk *ChunkInfo) (string, error) {
+	client := kv.C()
+	if val, err := client.Get(fmt.Sprintf(ChunkHashKey, f.Token, chunk.Offset)).Result(); err != nil {
+		return "", common.NewRedisError(err)
+	} else {
+		return val, nil
+	}
+}
+
+func (f *FileUploadMeta) CheckFileHash() error {
+	var hash strings.Builder
+	hash.Grow(32*len(f.Chunks)) // md5 hash
+
+	// make a copy and sort by offset
+	cs := make([]*ChunkInfo, len(f.Chunks))
+	copy(cs, f.Chunks)
+	sort.Slice(cs, func(i, j int) bool {
+		return cs[i].Offset < cs[j].Offset
+	})
+
+	for _, c := range cs {
+		h, err := f.GetChunkHashFromCache(c)
+		if err != nil {
+			return err
+		}
+		hash.WriteString(h)
+	}
+
+	total := util.Md5(hash.String())
+	if total != f.Hash {
+		return common.NewWeedError(errors.New("check total file hash failed"))
+	}
+	return nil
 }
 
 func NewUploadMeta(ownerId int64, folderId int64, filename string, hash string, size int64, mime string) *FileUploadMeta {

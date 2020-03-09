@@ -9,7 +9,9 @@ import (
 	"github.com/vegchic/fullbottle/bottle/service"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
+	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/util"
 	"github.com/vegchic/fullbottle/weed"
 	"time"
 )
@@ -29,11 +31,11 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 	// create upload meta
 	upload := weed.NewUploadMeta(ownerId, folderId, filename, hash, size, mime)
 	var history weed.FileUploadMeta
-	if err := kv.Get(upload.Token, &history); err == nil {
+	if err := kv.GetM(upload.Token, &history); err == nil {
 		upload = &history
 	} else {
 		// store for 15 days
-		if err := kv.Set(upload.Token, upload, 15*24*time.Hour); err != nil {
+		if err := kv.SetM(upload.Token, upload, 15*24*time.Hour); err != nil {
 			return err
 		}
 	}
@@ -44,6 +46,16 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 		return err
 	} else if meta != nil {
 		resp.NeedUpload = false
+
+		file, err := dao.GetFileByUploadMeta(ownerId, filename, folderId, meta.ID)
+		if err != nil {
+			return err
+		} else if file != nil {
+			return errors.New(config.BottleSrvName, "File has existed", common.ExistedError)
+		}
+
+	} else {
+		resp.NeedUpload = true
 	}
 
 	resp.Uploaded = upload.UploadedChunk()
@@ -51,7 +63,7 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 	return nil
 }
 
-func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) error {
+func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) (err error) {
 	token := req.GetToken()
 
 	// lock for upload meta
@@ -63,9 +75,24 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 
 	// fetch upload meta
 	upload := &weed.FileUploadMeta{}
-	if err := kv.Get(token, upload); err != nil {
+	if err := kv.GetM(token, upload); err != nil {
 		return err
 	}
+
+	if req.GetOwnerId() != upload.OwnerId {
+		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+	}
+
+	defer func() {
+		resp.Status = pb.UploadStatus(upload.Status)
+		resp.Uploaded = upload.UploadedChunk()
+
+		// refresh token
+		redisErr := kv.RefreshMValue(token, upload)
+		if err == nil {
+			err = redisErr
+		}
+	}()
 
 	// check file is already uploaded
 	meta, err := dao.GetFileMetaByHash(upload.Hash)
@@ -77,10 +104,19 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		// upload chunk
 		offset := req.GetOffset()
 		raw := req.GetRaw()
-		if len(raw) == 0 {
-			return errors.New(config.BottleSrvName, "Empty file", common.BadArgError)
+		chunkHash := req.GetChunkHash()
+		if uploaded, err := upload.CheckChunkOffset(offset, int64(len(raw))); err != nil {
+			return err
+		} else if uploaded {
+			return errors.New(config.BottleSrvName, "The chunk has been uploaded", common.ChunkUploadedError)
 		}
-		err = upload.Upload(raw, offset)
+
+		hash := util.BytesMd5(raw)
+		if hash != chunkHash {
+			return errors.New(config.BottleSrvName, "The chunk hash is incorrect", common.FileUploadingError)
+		}
+
+		err = upload.Upload(raw, offset, hash)
 		if err != nil {
 			return err
 		}
@@ -106,12 +142,54 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		upload.SetStatus(weed.DBDone)
 	}
 
-	// refresh token
-	if err := kv.RefreshValue(token, upload); err != nil {
+	return nil
+}
+
+func (*UploadHandler) GetFileUploadedChunks(ctx context.Context, req *pb.GetFileUploadedChunksRequest, resp *pb.GetFileUploadedChunksResponse) error {
+	token := req.GetToken()
+
+	// fetch upload meta
+	upload := &weed.FileUploadMeta{}
+	if err := kv.GetM(token, upload); err != nil {
 		return err
 	}
 
-	resp.Status = pb.UploadStatus(upload.Status)
+	if req.GetOwnerId() != upload.OwnerId {
+		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+	}
+
+	meta, err := dao.GetFileMetaByHash(upload.Hash)
+	if err != nil {
+		return err
+	} else if meta != nil {
+		resp.NeedUpload = false
+	} else {
+		resp.NeedUpload = true
+	}
+
 	resp.Uploaded = upload.UploadedChunk()
+
+	return nil
+}
+
+func (*UploadHandler) CancelFileUpload(ctx context.Context, req *pb.CancelFileUploadRequest, resp *pb.CancelFileUploadResponse) error {
+	token := req.GetToken()
+
+	// fetch upload meta
+	upload := &weed.FileUploadMeta{}
+	if err := kv.GetM(token, upload); err != nil {
+		return err
+	}
+
+	if req.GetOwnerId() != upload.OwnerId {
+		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+	}
+
+	for _, c := range upload.Chunks {
+		if err := weed.DeleteFile(c.Fid); err != nil {
+			log.WithCtx(ctx).WithError(err).Errorf("Cancel file upload failed")
+		}
+	}
+
 	return nil
 }

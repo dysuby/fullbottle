@@ -46,6 +46,8 @@ type BottleService interface {
 	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error)
 	GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, opts ...client.CallOption) (*GenerateUploadTokenResponse, error)
 	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error)
+	GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, opts ...client.CallOption) (*GetFileUploadedChunksResponse, error)
+	CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, opts ...client.CallOption) (*CancelFileUploadResponse, error)
 	GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, opts ...client.CallOption) (*GetDownloadUrlResponse, error)
 	ValidateEntry(ctx context.Context, in *ValidateEntryRequest, opts ...client.CallOption) (*ValidateEntryResponse, error)
 	GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, opts ...client.CallOption) (*GetEntryParentsResponse, error)
@@ -183,6 +185,26 @@ func (c *bottleService) UploadFile(ctx context.Context, in *UploadFileRequest, o
 	return out, nil
 }
 
+func (c *bottleService) GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, opts ...client.CallOption) (*GetFileUploadedChunksResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GetFileUploadedChunks", in)
+	out := new(GetFileUploadedChunksResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bottleService) CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, opts ...client.CallOption) (*CancelFileUploadResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.CancelFileUpload", in)
+	out := new(CancelFileUploadResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bottleService) GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, opts ...client.CallOption) (*GetDownloadUrlResponse, error) {
 	req := c.c.NewRequest(c.name, "BottleService.GetDownloadUrl", in)
 	out := new(GetDownloadUrlResponse)
@@ -228,6 +250,8 @@ type BottleServiceHandler interface {
 	RemoveFile(context.Context, *RemoveFileRequest, *RemoveFileResponse) error
 	GenerateUploadToken(context.Context, *GenerateUploadTokenRequest, *GenerateUploadTokenResponse) error
 	UploadFile(context.Context, *UploadFileRequest, *UploadFileResponse) error
+	GetFileUploadedChunks(context.Context, *GetFileUploadedChunksRequest, *GetFileUploadedChunksResponse) error
+	CancelFileUpload(context.Context, *CancelFileUploadRequest, *CancelFileUploadResponse) error
 	GetDownloadUrl(context.Context, *GetDownloadUrlRequest, *GetDownloadUrlResponse) error
 	ValidateEntry(context.Context, *ValidateEntryRequest, *ValidateEntryResponse) error
 	GetEntryParents(context.Context, *GetEntryParentsRequest, *GetEntryParentsResponse) error
@@ -247,6 +271,8 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error
 		GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, out *GenerateUploadTokenResponse) error
 		UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error
+		GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, out *GetFileUploadedChunksResponse) error
+		CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, out *CancelFileUploadResponse) error
 		GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, out *GetDownloadUrlResponse) error
 		ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error
 		GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, out *GetEntryParentsResponse) error
@@ -308,6 +334,14 @@ func (h *bottleServiceHandler) GenerateUploadToken(ctx context.Context, in *Gene
 
 func (h *bottleServiceHandler) UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error {
 	return h.BottleServiceHandler.UploadFile(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, out *GetFileUploadedChunksResponse) error {
+	return h.BottleServiceHandler.GetFileUploadedChunks(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, out *CancelFileUploadResponse) error {
+	return h.BottleServiceHandler.CancelFileUpload(ctx, in, out)
 }
 
 func (h *bottleServiceHandler) GetDownloadUrl(ctx context.Context, in *GetDownloadUrlRequest, out *GetDownloadUrlResponse) error {

@@ -219,6 +219,8 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("token", resp.Token, int(resp.Expire), "/", config.C().Server.Ip, false, true)
+
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "Success",
 		"result": gin.H{

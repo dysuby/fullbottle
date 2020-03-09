@@ -26,6 +26,10 @@ type Config struct {
 		}
 	}
 
+	Server struct {
+		Ip string
+	}
+
 	Weed struct {
 		Master string
 	}

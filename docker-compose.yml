@@ -31,6 +31,8 @@ services:
     restart: always
     networks:
       - fullbottle-network
+    environment:
+      - SERVER_IP=${public_ip}
     env_file:
       - .env
     depends_on:

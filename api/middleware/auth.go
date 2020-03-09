@@ -7,22 +7,20 @@ import (
 	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	"github.com/vegchic/fullbottle/common"
 	"net/http"
-	"strings"
 )
 
 func LoginRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// validate jwt token
 		authClient := common.AuthSrvClient()
-		authorization := c.GetHeader("authorization")
-		if !strings.HasPrefix(authorization, "Bearer ") {
+		token, err := c.Cookie("token")
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"msg": "Not authorized",
 			})
 			return
 		}
 
-		token := authorization[7:]
 		authResp, err := authClient.ParseJwtToken(util.RpcContext(c), &pbauth.ParseJwtTokenRequest{Token: token})
 
 		if err != nil {

@@ -51,7 +51,7 @@ func registerV1Routes(g *gin.Engine) {
 		api.GET("/space/upload/file", handler.GetUploadedFileChunks)
 		api.DELETE("/space/upload/file", handler.CancelFileUpload)
 
-		api.POST("/space/download/file", handler.DownloadFile)
+		api.POST("/space/download/file", handler.CreateDownloadUrl)
 
 		// share
 		api.POST("/share", handler.CreateShare)          // create share
@@ -63,6 +63,9 @@ func registerV1Routes(g *gin.Engine) {
 		api.GET("/share/:token/info", handler.ShareInfo)
 		api.GET("/share/:token", handler.ShareEntry)                  // get share entries
 		api.POST("/share/:token/download", handler.DownloadShareFile) // download
+
+		// raw download
+		api.GET("/download/file/:download_token", handler.DownloadFile)
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

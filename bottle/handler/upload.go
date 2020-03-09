@@ -175,6 +175,13 @@ func (*UploadHandler) GetFileUploadedChunks(ctx context.Context, req *pb.GetFile
 func (*UploadHandler) CancelFileUpload(ctx context.Context, req *pb.CancelFileUploadRequest, resp *pb.CancelFileUploadResponse) error {
 	token := req.GetToken()
 
+	// lock for upload meta
+	lock, err := kv.Obtain(fmt.Sprintf(UploadLockKey, token), 100*time.Millisecond)
+	if err != nil {
+		return err
+	}
+	defer lock.Release()
+
 	// fetch upload meta
 	upload := &weed.FileUploadMeta{}
 	if err := kv.GetM(token, upload); err != nil {
@@ -189,6 +196,10 @@ func (*UploadHandler) CancelFileUpload(ctx context.Context, req *pb.CancelFileUp
 		if err := weed.DeleteFile(c.Fid); err != nil {
 			log.WithCtx(ctx).WithError(err).Errorf("Cancel file upload failed")
 		}
+	}
+
+	if err := kv.Del(token); err != nil {
+		log.WithCtx(ctx).WithError(err).Errorf("Delete upload meta failed")
 	}
 
 	return nil

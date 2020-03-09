@@ -264,9 +264,9 @@ func DownloadShareFile(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 	body := struct {
-		AccessToken string `json:"access_token"`
-		FileId      int64  `json:"file_id" bindings:"file_id"`
-		Path        string `json:"path"`
+		AccessToken string `json:"access_token" bindings:"required"`
+		FileId      int64  `json:"file_id" bindings:"required"`
+		Path        string `json:"path" bindings:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -290,5 +290,8 @@ func DownloadShareFile(c *gin.Context) {
 		return
 	}
 
-	util.DownloadProxy(c, resp.Url)
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Success",
+		"result": resp,
+	})
 }

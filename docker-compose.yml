@@ -46,6 +46,10 @@ services:
     <<: *service
     build: ./bottle
 
+  upload-service:
+    <<: *service
+    build: ./upload
+
   share-service:
     <<: *service
     build: ./share

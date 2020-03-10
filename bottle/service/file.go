@@ -35,6 +35,8 @@ func CreateFile(file *dao.FileInfo, meta *dao.FileMeta) error {
 	}
 	file.Name = name
 	file.FileId = meta.ID
+	file.Size = meta.Size
+
 	err = dao.CreateFile(file, meta)
 	if err != nil {
 		return err

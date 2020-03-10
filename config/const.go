@@ -6,6 +6,7 @@ const (
 	AuthSrvName   = "fullbottle.srv.auth"
 	BottleSrvName = "fullbottle.srv.bottle"
 	ShareSrvName  = "fullbottle.srv.share"
+	UploadSrvName = "fullbottle.srv.upload"
 
 	WeedName  = "fullbottle.weed"
 	DBName    = "fullbottle.mysql"

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package fullbottle.srv.upload;
+
+service Upload {
+    rpc GenerateUploadToken(GenerateUploadTokenRequest) returns (GenerateUploadTokenResponse) {}
+    rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {}
+    rpc GetFileUploadedChunks(GetFileUploadedChunksRequest) returns (GetFileUploadedChunksResponse) {}
+    rpc CancelFileUpload(CancelFileUploadRequest) returns (CancelFileUploadResponse) {}
+}
+
+message GenerateUploadTokenRequest {
+    int64 owner_id = 1;
+    string filename = 2;
+    int64 folder_id = 3;
+    string hash = 4;
+    int64 size = 5;
+    string mime = 6;
+}
+
+message GenerateUploadTokenResponse {
+    string token = 1;
+    bool need_upload = 2;
+    repeated int64 uploaded = 3;
+}
+
+message UploadFileRequest {
+    string token = 1;
+    int64 owner_id = 2;
+    int64 offset = 3;
+    bytes raw = 4;
+    string chunk_hash = 5;
+}
+
+enum UploadStatus {
+    _ = 0;
+
+    uploading = 1;
+
+    // 2, 3 wouldn't appear in normal case
+    manifest = 2;
+    weed_done = 3;
+
+    finish = 4;
+}
+
+message UploadFileResponse {
+    UploadStatus status = 1;
+    repeated int64 uploaded = 2;
+}
+
+message GetFileUploadedChunksRequest {
+    string token = 1;
+    int64 owner_id = 2;
+}
+
+message GetFileUploadedChunksResponse {
+    repeated int64 uploaded = 1;
+    bool need_upload = 2;
+}
+
+message CancelFileUploadRequest {
+    string token = 1;
+    int64 owner_id = 2;
+}
+
+message CancelFileUploadResponse {
+
+}

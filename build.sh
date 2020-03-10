@@ -16,6 +16,7 @@ then
     build auth
     build bottle
     build share
+    build upload
 else
     for var in "$@"
     do

@@ -6,6 +6,7 @@ import (
 	"github.com/vegchic/fullbottle/api/util"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
+	pbupload "github.com/vegchic/fullbottle/upload/proto/upload"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -53,7 +54,8 @@ func GetUploadToken(c *gin.Context) {
 		return
 	}
 
-	req := &pbbottle.GenerateUploadTokenRequest{
+	uploadClient := common.UploadSrvClient()
+	req := &pbupload.GenerateUploadTokenRequest{
 		OwnerId:  uid,
 		Filename: body.Filename,
 		FolderId: body.FolderId,
@@ -61,7 +63,7 @@ func GetUploadToken(c *gin.Context) {
 		Size:     body.Size,
 		Mime:     body.Mime,
 	}
-	resp, err := bottleClient.GenerateUploadToken(util.RpcContext(c), req)
+	resp, err := uploadClient.GenerateUploadToken(util.RpcContext(c), req)
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -96,8 +98,9 @@ func UploadFile(c *gin.Context) {
 		})
 		return
 	}
-	bottleClient := common.BottleSrvClient()
-	uploadedResp, err := bottleClient.GetFileUploadedChunks(util.RpcContext(c), &pbbottle.GetFileUploadedChunksRequest{Token: body.Token, OwnerId:uid})
+
+	uploadClient := common.UploadSrvClient()
+	uploadedResp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: body.Token, OwnerId:uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -126,14 +129,14 @@ func UploadFile(c *gin.Context) {
 		}
 	}
 
-	req := &pbbottle.UploadFileRequest{
+	req := &pbupload.UploadFileRequest{
 		Token:  body.Token,
 		OwnerId:uid,
 		Offset: body.Offset,
 		Raw:    b,
 		ChunkHash:body.ChunkHash,
 	}
-	resp, err := bottleClient.UploadFile(util.RpcContext(c), req)
+	resp, err := uploadClient.UploadFile(util.RpcContext(c), req)
 	if err != nil {
 		e := errors.Parse(err.Error())
 		if e.Code == common.FileFailError {
@@ -171,8 +174,8 @@ func GetUploadedFileChunks(c *gin.Context) {
 		})
 		return
 	}
-	bottleClient := common.BottleSrvClient()
-	resp, err := bottleClient.GetFileUploadedChunks(util.RpcContext(c), &pbbottle.GetFileUploadedChunksRequest{Token: query.Token, OwnerId:uid})
+	uploadClient := common.UploadSrvClient()
+	resp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: query.Token, OwnerId:uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -202,8 +205,8 @@ func CancelFileUpload(c *gin.Context) {
 		})
 		return
 	}
-	bottleClient := common.BottleSrvClient()
-	_, err := bottleClient.CancelFileUpload(util.RpcContext(c), &pbbottle.CancelFileUploadRequest{Token:body.Token, OwnerId:uid})
+	uploadClient := common.UploadSrvClient()
+	_, err := uploadClient.CancelFileUpload(util.RpcContext(c), &pbupload.CancelFileUploadRequest{Token:body.Token, OwnerId:uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{

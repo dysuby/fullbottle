@@ -41,13 +41,13 @@ type BottleService interface {
 	CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...client.CallOption) (*CreateFolderResponse, error)
 	UpdateFolder(ctx context.Context, in *UpdateFolderRequest, opts ...client.CallOption) (*UpdateFolderResponse, error)
 	RemoveFolder(ctx context.Context, in *RemoveFolderRequest, opts ...client.CallOption) (*RemoveFolderResponse, error)
+	GetFileMeta(ctx context.Context, in *GetFileMetaRequest, opts ...client.CallOption) (*GetFileMetaResponse, error)
+	CreateFileMeta(ctx context.Context, in *CreateFileMetaRequest, opts ...client.CallOption) (*CreateFileMetaResponse, error)
 	GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...client.CallOption) (*GetFileInfoResponse, error)
+	GetFileByMeta(ctx context.Context, in *GetFileByMetaRequest, opts ...client.CallOption) (*GetFileByMetaResponse, error)
+	CreateFile(ctx context.Context, in *CreateFileRequest, opts ...client.CallOption) (*CreateFileResponse, error)
 	UpdateFile(ctx context.Context, in *UpdateFileRequest, opts ...client.CallOption) (*UpdateFileResponse, error)
 	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error)
-	GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, opts ...client.CallOption) (*GenerateUploadTokenResponse, error)
-	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error)
-	GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, opts ...client.CallOption) (*GetFileUploadedChunksResponse, error)
-	CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, opts ...client.CallOption) (*CancelFileUploadResponse, error)
 	CreateDownloadUrl(ctx context.Context, in *CreateDownloadUrlRequest, opts ...client.CallOption) (*CreateDownloadUrlResponse, error)
 	GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownloadUrlRequest, opts ...client.CallOption) (*GetWeedDownloadUrlResponse, error)
 	ValidateEntry(ctx context.Context, in *ValidateEntryRequest, opts ...client.CallOption) (*ValidateEntryResponse, error)
@@ -136,9 +136,49 @@ func (c *bottleService) RemoveFolder(ctx context.Context, in *RemoveFolderReques
 	return out, nil
 }
 
+func (c *bottleService) GetFileMeta(ctx context.Context, in *GetFileMetaRequest, opts ...client.CallOption) (*GetFileMetaResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GetFileMeta", in)
+	out := new(GetFileMetaResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bottleService) CreateFileMeta(ctx context.Context, in *CreateFileMetaRequest, opts ...client.CallOption) (*CreateFileMetaResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.CreateFileMeta", in)
+	out := new(CreateFileMetaResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bottleService) GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...client.CallOption) (*GetFileInfoResponse, error) {
 	req := c.c.NewRequest(c.name, "BottleService.GetFileInfo", in)
 	out := new(GetFileInfoResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bottleService) GetFileByMeta(ctx context.Context, in *GetFileByMetaRequest, opts ...client.CallOption) (*GetFileByMetaResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GetFileByMeta", in)
+	out := new(GetFileByMetaResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bottleService) CreateFile(ctx context.Context, in *CreateFileRequest, opts ...client.CallOption) (*CreateFileResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.CreateFile", in)
+	out := new(CreateFileResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -159,46 +199,6 @@ func (c *bottleService) UpdateFile(ctx context.Context, in *UpdateFileRequest, o
 func (c *bottleService) RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error) {
 	req := c.c.NewRequest(c.name, "BottleService.RemoveFile", in)
 	out := new(RemoveFileResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *bottleService) GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, opts ...client.CallOption) (*GenerateUploadTokenResponse, error) {
-	req := c.c.NewRequest(c.name, "BottleService.GenerateUploadToken", in)
-	out := new(GenerateUploadTokenResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *bottleService) UploadFile(ctx context.Context, in *UploadFileRequest, opts ...client.CallOption) (*UploadFileResponse, error) {
-	req := c.c.NewRequest(c.name, "BottleService.UploadFile", in)
-	out := new(UploadFileResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *bottleService) GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, opts ...client.CallOption) (*GetFileUploadedChunksResponse, error) {
-	req := c.c.NewRequest(c.name, "BottleService.GetFileUploadedChunks", in)
-	out := new(GetFileUploadedChunksResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *bottleService) CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, opts ...client.CallOption) (*CancelFileUploadResponse, error) {
-	req := c.c.NewRequest(c.name, "BottleService.CancelFileUpload", in)
-	out := new(CancelFileUploadResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -256,13 +256,13 @@ type BottleServiceHandler interface {
 	CreateFolder(context.Context, *CreateFolderRequest, *CreateFolderResponse) error
 	UpdateFolder(context.Context, *UpdateFolderRequest, *UpdateFolderResponse) error
 	RemoveFolder(context.Context, *RemoveFolderRequest, *RemoveFolderResponse) error
+	GetFileMeta(context.Context, *GetFileMetaRequest, *GetFileMetaResponse) error
+	CreateFileMeta(context.Context, *CreateFileMetaRequest, *CreateFileMetaResponse) error
 	GetFileInfo(context.Context, *GetFileInfoRequest, *GetFileInfoResponse) error
+	GetFileByMeta(context.Context, *GetFileByMetaRequest, *GetFileByMetaResponse) error
+	CreateFile(context.Context, *CreateFileRequest, *CreateFileResponse) error
 	UpdateFile(context.Context, *UpdateFileRequest, *UpdateFileResponse) error
 	RemoveFile(context.Context, *RemoveFileRequest, *RemoveFileResponse) error
-	GenerateUploadToken(context.Context, *GenerateUploadTokenRequest, *GenerateUploadTokenResponse) error
-	UploadFile(context.Context, *UploadFileRequest, *UploadFileResponse) error
-	GetFileUploadedChunks(context.Context, *GetFileUploadedChunksRequest, *GetFileUploadedChunksResponse) error
-	CancelFileUpload(context.Context, *CancelFileUploadRequest, *CancelFileUploadResponse) error
 	CreateDownloadUrl(context.Context, *CreateDownloadUrlRequest, *CreateDownloadUrlResponse) error
 	GetWeedDownloadUrl(context.Context, *GetWeedDownloadUrlRequest, *GetWeedDownloadUrlResponse) error
 	ValidateEntry(context.Context, *ValidateEntryRequest, *ValidateEntryResponse) error
@@ -278,13 +278,13 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		CreateFolder(ctx context.Context, in *CreateFolderRequest, out *CreateFolderResponse) error
 		UpdateFolder(ctx context.Context, in *UpdateFolderRequest, out *UpdateFolderResponse) error
 		RemoveFolder(ctx context.Context, in *RemoveFolderRequest, out *RemoveFolderResponse) error
+		GetFileMeta(ctx context.Context, in *GetFileMetaRequest, out *GetFileMetaResponse) error
+		CreateFileMeta(ctx context.Context, in *CreateFileMetaRequest, out *CreateFileMetaResponse) error
 		GetFileInfo(ctx context.Context, in *GetFileInfoRequest, out *GetFileInfoResponse) error
+		GetFileByMeta(ctx context.Context, in *GetFileByMetaRequest, out *GetFileByMetaResponse) error
+		CreateFile(ctx context.Context, in *CreateFileRequest, out *CreateFileResponse) error
 		UpdateFile(ctx context.Context, in *UpdateFileRequest, out *UpdateFileResponse) error
 		RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error
-		GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, out *GenerateUploadTokenResponse) error
-		UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error
-		GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, out *GetFileUploadedChunksResponse) error
-		CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, out *CancelFileUploadResponse) error
 		CreateDownloadUrl(ctx context.Context, in *CreateDownloadUrlRequest, out *CreateDownloadUrlResponse) error
 		GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownloadUrlRequest, out *GetWeedDownloadUrlResponse) error
 		ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error
@@ -329,8 +329,24 @@ func (h *bottleServiceHandler) RemoveFolder(ctx context.Context, in *RemoveFolde
 	return h.BottleServiceHandler.RemoveFolder(ctx, in, out)
 }
 
+func (h *bottleServiceHandler) GetFileMeta(ctx context.Context, in *GetFileMetaRequest, out *GetFileMetaResponse) error {
+	return h.BottleServiceHandler.GetFileMeta(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) CreateFileMeta(ctx context.Context, in *CreateFileMetaRequest, out *CreateFileMetaResponse) error {
+	return h.BottleServiceHandler.CreateFileMeta(ctx, in, out)
+}
+
 func (h *bottleServiceHandler) GetFileInfo(ctx context.Context, in *GetFileInfoRequest, out *GetFileInfoResponse) error {
 	return h.BottleServiceHandler.GetFileInfo(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) GetFileByMeta(ctx context.Context, in *GetFileByMetaRequest, out *GetFileByMetaResponse) error {
+	return h.BottleServiceHandler.GetFileByMeta(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) CreateFile(ctx context.Context, in *CreateFileRequest, out *CreateFileResponse) error {
+	return h.BottleServiceHandler.CreateFile(ctx, in, out)
 }
 
 func (h *bottleServiceHandler) UpdateFile(ctx context.Context, in *UpdateFileRequest, out *UpdateFileResponse) error {
@@ -339,22 +355,6 @@ func (h *bottleServiceHandler) UpdateFile(ctx context.Context, in *UpdateFileReq
 
 func (h *bottleServiceHandler) RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error {
 	return h.BottleServiceHandler.RemoveFile(ctx, in, out)
-}
-
-func (h *bottleServiceHandler) GenerateUploadToken(ctx context.Context, in *GenerateUploadTokenRequest, out *GenerateUploadTokenResponse) error {
-	return h.BottleServiceHandler.GenerateUploadToken(ctx, in, out)
-}
-
-func (h *bottleServiceHandler) UploadFile(ctx context.Context, in *UploadFileRequest, out *UploadFileResponse) error {
-	return h.BottleServiceHandler.UploadFile(ctx, in, out)
-}
-
-func (h *bottleServiceHandler) GetFileUploadedChunks(ctx context.Context, in *GetFileUploadedChunksRequest, out *GetFileUploadedChunksResponse) error {
-	return h.BottleServiceHandler.GetFileUploadedChunks(ctx, in, out)
-}
-
-func (h *bottleServiceHandler) CancelFileUpload(ctx context.Context, in *CancelFileUploadRequest, out *CancelFileUploadResponse) error {
-	return h.BottleServiceHandler.CancelFileUpload(ctx, in, out)
 }
 
 func (h *bottleServiceHandler) CreateDownloadUrl(ctx context.Context, in *CreateDownloadUrlRequest, out *CreateDownloadUrlResponse) error {

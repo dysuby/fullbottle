@@ -4,7 +4,6 @@ type BottleServiceHandler struct {
 	BottleHandler
 	FolderHandler
 	FileHandler
-	UploadHandler
 	DownloadHandler
 	EntryHandler
 }

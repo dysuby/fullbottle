@@ -181,7 +181,7 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64, hash string) error {
 	return nil
 }
 
-func (f *FileUploadMeta) UploadedChunk() []int64 {
+func (f *FileUploadMeta) UploadedChunks() []int64 {
 	var ranges []int64
 	for _, c := range f.Chunks {
 		ranges = append(ranges, c.Offset)

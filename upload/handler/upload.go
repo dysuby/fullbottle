@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/micro/go-micro/v2/errors"
-	"github.com/vegchic/fullbottle/bottle/dao"
-	pb "github.com/vegchic/fullbottle/bottle/proto/bottle"
-	"github.com/vegchic/fullbottle/bottle/service"
+	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/kv"
 	"github.com/vegchic/fullbottle/common/log"
@@ -14,6 +12,8 @@ import (
 	"github.com/vegchic/fullbottle/util"
 	"github.com/vegchic/fullbottle/weed"
 	"time"
+
+	pb "github.com/vegchic/fullbottle/upload/proto/upload"
 )
 
 const UploadLockKey = "lock:token=%s"
@@ -40,30 +40,30 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 		}
 	}
 
+	resp.NeedUpload = false
+
 	// check file is already uploaded, then client only need to call UploadFile without file data
-	meta, err := dao.GetFileMetaByHash(hash)
+	bottleClient := common.BottleSrvClient()
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash:hash})
 	if err != nil {
 		return err
-	} else if meta != nil {
-		resp.NeedUpload = false
-
-		file, err := dao.GetFileByUploadMeta(ownerId, filename, folderId, meta.ID)
+	} else if metaResp.Id == 0 {
+		resp.NeedUpload = true	// meta not found
+	} else {
+		fileResp, err := bottleClient.GetFileByMeta(ctx, &pbbottle.GetFileByMetaRequest{Name:filename, FolderId:folderId, OwnerId:ownerId, MetaId:metaResp.Id})
 		if err != nil {
 			return err
-		} else if file != nil {
-			return errors.New(config.BottleSrvName, "File has existed", common.ExistedError)
+		} else if fileResp.File.Id != 0 {
+			return errors.New(config.UploadSrvName, "File has existed", common.ExistedError)
 		}
-
-	} else {
-		resp.NeedUpload = true
 	}
 
-	resp.Uploaded = upload.UploadedChunk()
+	resp.Uploaded = upload.UploadedChunks()
 	resp.Token = upload.Token
 	return nil
 }
 
-func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) (err error) {
+func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest, resp *pb.UploadFileResponse) error {
 	token := req.GetToken()
 
 	// lock for upload meta
@@ -80,12 +80,12 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 	}
 
 	if req.GetOwnerId() != upload.OwnerId {
-		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+		return errors.New(config.UploadSrvName, "Incorrect owner", common.NotFoundError)
 	}
 
 	defer func() {
 		resp.Status = pb.UploadStatus(upload.Status)
-		resp.Uploaded = upload.UploadedChunk()
+		resp.Uploaded = upload.UploadedChunks()
 
 		// refresh token
 		redisErr := kv.RefreshMValue(token, upload)
@@ -95,10 +95,11 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 	}()
 
 	// check file is already uploaded
-	meta, err := dao.GetFileMetaByHash(upload.Hash)
+	bottleClient := common.BottleSrvClient()
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{ Hash:upload.Hash })
 	if err != nil {
 		return err
-	} else if meta != nil {
+	}  else if metaResp.Id != 0 {
 		upload.SetStatus(weed.WeedDone)
 	} else {
 		// upload chunk
@@ -108,12 +109,12 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		if uploaded, err := upload.CheckChunkOffset(offset, int64(len(raw))); err != nil {
 			return err
 		} else if uploaded {
-			return errors.New(config.BottleSrvName, "The chunk has been uploaded", common.ChunkUploadedError)
+			return errors.New(config.UploadSrvName, "The chunk has been uploaded", common.ChunkUploadedError)
 		}
 
 		hash := util.BytesMd5(raw)
 		if hash != chunkHash {
-			return errors.New(config.BottleSrvName, "The chunk hash is incorrect", common.FileUploadingError)
+			return errors.New(config.UploadSrvName, "The chunk hash is incorrect", common.FileUploadingError)
 		}
 
 		err = upload.Upload(raw, offset, hash)
@@ -124,18 +125,26 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 
 	// upload weed done, create meta and file
 	if upload.Status == weed.WeedDone {
-		if meta == nil {
-			meta = &dao.FileMeta{}
-			meta.FromUploadMeta(upload)
-			err := dao.CreateFileMeta(meta)
+		if metaResp.Id == 0 {
+			b, _ := upload.ChunkManifest.Json()
+			createMeta, err := bottleClient.CreateFileMeta(ctx, &pbbottle.CreateFileMetaRequest{
+				Fid:                  upload.Fid,
+				Size:                 upload.Size,
+				Hash:                 upload.Hash,
+				ChunkManifest:        string(b),
+			})
 			if err != nil {
 				return err
 			}
+			metaResp.Id = createMeta.Id
 		}
 
-		info := &dao.FileInfo{}
-		info.FromUploadMeta(upload)
-		err = service.CreateFile(info, meta)
+		_, err := bottleClient.CreateFile(ctx, &pbbottle.CreateFileRequest{
+			OwnerId:              upload.OwnerId,
+			FolderId:             upload.FolderId,
+			Name:                 upload.Name,
+			MetaId:               metaResp.Id,
+		})
 		if err != nil {
 			return err
 		}
@@ -155,19 +164,20 @@ func (*UploadHandler) GetFileUploadedChunks(ctx context.Context, req *pb.GetFile
 	}
 
 	if req.GetOwnerId() != upload.OwnerId {
-		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+		return errors.New(config.UploadSrvName, "Incorrect owner", common.NotFoundError)
 	}
 
-	meta, err := dao.GetFileMetaByHash(upload.Hash)
+	resp.NeedUpload = true
+
+	bottleClient := common.BottleSrvClient()
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash:upload.Hash})
 	if err != nil {
 		return err
-	} else if meta != nil {
+	} else if metaResp.Id != 0 {
 		resp.NeedUpload = false
-	} else {
-		resp.NeedUpload = true
 	}
 
-	resp.Uploaded = upload.UploadedChunk()
+	resp.Uploaded = upload.UploadedChunks()
 
 	return nil
 }
@@ -189,7 +199,7 @@ func (*UploadHandler) CancelFileUpload(ctx context.Context, req *pb.CancelFileUp
 	}
 
 	if req.GetOwnerId() != upload.OwnerId {
-		return errors.New(config.BottleSrvName, "Incorrect owner", common.NotFoundError)
+		return errors.New(config.UploadSrvName, "Incorrect owner", common.NotFoundError)
 	}
 
 	for _, c := range upload.Chunks {

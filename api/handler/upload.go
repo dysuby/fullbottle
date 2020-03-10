@@ -17,11 +17,11 @@ func GetUploadToken(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		FolderId int64  `json:"folder_id" bindings:"required"`
-		Filename string `json:"filename" bindings:"required,min=1,max=100"`
-		Mime     string `json:"mime" bindings:"required"`
-		Hash     string `json:"hash" bindings:"required"`
-		Size     int64  `json:"size" bindings:"required"`
+		FolderId int64  `json:"folder_id" binding:"required"`
+		Filename string `json:"filename" binding:"required,min=1,max=100"`
+		Mime     string `json:"mime" binding:"required"`
+		Hash     string `json:"hash" binding:"required"`
+		Size     int64  `json:"size" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -88,9 +88,9 @@ func UploadFile(c *gin.Context) {
 
 	body := struct {
 		File      *multipart.FileHeader `form:"file"`
-		Token     string                `form:"token" bindings:"required"`
-		Offset    int64                 `form:"offset" bindings:"required"`
-		ChunkHash string                `form:"chunk_hash" bindings:"required"`
+		Token     string                `form:"token" binding:"required"`
+		Offset    int64                 `form:"offset" binding:"required"`
+		ChunkHash string                `form:"chunk_hash" binding:"required"`
 	}{}
 	if err := c.ShouldBind(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -100,7 +100,7 @@ func UploadFile(c *gin.Context) {
 	}
 
 	uploadClient := common.UploadSrvClient()
-	uploadedResp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: body.Token, OwnerId:uid})
+	uploadedResp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: body.Token, OwnerId: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -113,7 +113,7 @@ func UploadFile(c *gin.Context) {
 			c.JSON(http.StatusCreated, gin.H{
 				"msg": "The chunk has been uploaded",
 				"result": gin.H{
-					"uploaded": uploadedResp.Uploaded,
+					"uploaded":    uploadedResp.Uploaded,
 					"need_upload": uploadedResp.NeedUpload,
 				},
 			})
@@ -130,11 +130,11 @@ func UploadFile(c *gin.Context) {
 	}
 
 	req := &pbupload.UploadFileRequest{
-		Token:  body.Token,
-		OwnerId:uid,
-		Offset: body.Offset,
-		Raw:    b,
-		ChunkHash:body.ChunkHash,
+		Token:     body.Token,
+		OwnerId:   uid,
+		Offset:    body.Offset,
+		Raw:       b,
+		ChunkHash: body.ChunkHash,
 	}
 	resp, err := uploadClient.UploadFile(util.RpcContext(c), req)
 	if err != nil {
@@ -166,7 +166,7 @@ func GetUploadedFileChunks(c *gin.Context) {
 	uid := u.(int64)
 
 	query := struct {
-		Token string `form:"token" bindings:"required"`
+		Token string `form:"token" binding:"required"`
 	}{}
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -175,7 +175,7 @@ func GetUploadedFileChunks(c *gin.Context) {
 		return
 	}
 	uploadClient := common.UploadSrvClient()
-	resp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: query.Token, OwnerId:uid})
+	resp, err := uploadClient.GetFileUploadedChunks(util.RpcContext(c), &pbupload.GetFileUploadedChunksRequest{Token: query.Token, OwnerId: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -186,7 +186,7 @@ func GetUploadedFileChunks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"msg": "Success",
 		"result": gin.H{
-			"uploaded": resp.Uploaded,
+			"uploaded":    resp.Uploaded,
 			"need_upload": resp.NeedUpload,
 		},
 	})
@@ -197,7 +197,7 @@ func CancelFileUpload(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Token    string                `form:"token" bindings:"required"`
+		Token string `form:"token" binding:"required"`
 	}{}
 	if err := c.ShouldBind(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -206,7 +206,7 @@ func CancelFileUpload(c *gin.Context) {
 		return
 	}
 	uploadClient := common.UploadSrvClient()
-	_, err := uploadClient.CancelFileUpload(util.RpcContext(c), &pbupload.CancelFileUploadRequest{Token:body.Token, OwnerId:uid})
+	_, err := uploadClient.CancelFileUpload(util.RpcContext(c), &pbupload.CancelFileUploadRequest{Token: body.Token, OwnerId: uid})
 	if err != nil {
 		e := errors.Parse(err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{

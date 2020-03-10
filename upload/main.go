@@ -5,10 +5,10 @@ import (
 	"github.com/micro/go-micro/v2/client"
 	gclient "github.com/micro/go-micro/v2/client/grpc"
 	gserver "github.com/micro/go-micro/v2/server/grpc"
-	"github.com/vegchic/fullbottle/upload/handler"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/log"
 	"github.com/vegchic/fullbottle/config"
+	"github.com/vegchic/fullbottle/upload/handler"
 
 	pb "github.com/vegchic/fullbottle/upload/proto/upload"
 )

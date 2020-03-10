@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-redis/redis/v7 v7.1.0
 	github.com/gofrs/uuid v3.2.0+incompatible
@@ -15,4 +16,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
+	golang.org/x/image v0.0.0-20200119044424-58c23975cae1 // indirect
 )

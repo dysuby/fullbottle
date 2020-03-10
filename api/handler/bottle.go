@@ -104,7 +104,7 @@ func UpdateFolder(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		FolderId int64  `json:"folder_id" bindings:"required"`
+		FolderId int64  `json:"folder_id" binding:"required"`
 		Name     string `json:"name" binding:"required,max=100,min=1"`
 		ParentId int64  `json:"parent_id" binding:"required"`
 	}{}
@@ -136,7 +136,7 @@ func RemoveFolder(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		FolderId int64 `json:"folder_id" bindings:"required"`
+		FolderId int64 `json:"folder_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -165,8 +165,8 @@ func UpdateFile(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		FileId   int64  `json:"file_id" bindings:"required"`
-		FolderId int64  `json:"folder_id" bindings:"required"`
+		FileId   int64  `json:"file_id" binding:"required"`
+		FolderId int64  `json:"folder_id" binding:"required"`
 		Name     string `json:"name" binding:"required,max=100,min=1"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -197,7 +197,7 @@ func RemoveFile(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		FileId int64 `json:"file_id" bindings:"required"`
+		FileId int64 `json:"file_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -226,7 +226,7 @@ func GetFolderParents(c *gin.Context) {
 	uid := u.(int64)
 
 	query := struct {
-		FolderId int64 `form:"folder_id" bindings:"required"`
+		FolderId int64 `form:"folder_id" binding:"required"`
 	}{}
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -247,7 +247,7 @@ func GetFolderParents(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"result": resp.Parents,
 	})
 }

@@ -17,7 +17,7 @@ import (
 	pb "github.com/vegchic/fullbottle/user/proto/user"
 	"github.com/vegchic/fullbottle/util"
 	"github.com/vegchic/fullbottle/weed"
-	"io/ioutil"
+	"io"
 	"time"
 )
 
@@ -162,12 +162,12 @@ func (u *UserHandler) GetUserAvatar(ctx context.Context, req *pb.GetUserAvatarRe
 	body := avatarResp.Body
 	defer body.Close()
 
-	avatar, err := ioutil.ReadAll(body)
-	if err != nil {
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, body); err != nil {
 		return errors.New(config.UserSrvName, "Avatar lost due to: "+err.Error(), common.FileFetchError)
 	}
 
-	resp.Avatar = avatar
+	resp.Avatar = buf.Bytes()
 	resp.ContentType = avatarResp.Header.Get("Content-Type")
 	return nil
 }

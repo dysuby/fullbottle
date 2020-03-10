@@ -14,12 +14,12 @@ func CreateShare(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Code      string  `json:"code" bindings:"required"`
-		Exp       int64   `json:"exp" bindings:"required"`
-		ParentId  int64   `json:"parent_id" bindings:"required"`
-		FileIds   []int64 `json:"file_ids" bindings:"required"`
-		FolderIds []int64 `json:"folder_ids" bindings:"required"`
-		IsPublic  bool    `json:"is_public" bindings:"required"`
+		Code      string  `json:"code" binding:"required"`
+		Exp       int64   `json:"exp" binding:"required"`
+		ParentId  int64   `json:"parent_id" binding:"required"`
+		FileIds   []int64 `json:"file_ids" binding:"required"`
+		FolderIds []int64 `json:"folder_ids" binding:"required"`
+		IsPublic  bool    `json:"is_public" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -57,10 +57,10 @@ func UpdateShare(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Token    string `json:"token" bindings:"required"`
-		Code     string `json:"code" bindings:"required"`
-		Exp      int64  `json:"exp" bindings:"required"`
-		IsPublic bool   `json:"is_public" bindings:"required"`
+		Token    string `json:"token" binding:"required"`
+		Code     string `json:"code" binding:"required"`
+		Exp      int64  `json:"exp" binding:"required"`
+		IsPublic bool   `json:"is_public" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -95,7 +95,7 @@ func CancelShare(c *gin.Context) {
 	uid := u.(int64)
 
 	body := struct {
-		Token string `json:"token" bindings:"required"`
+		Token string `json:"token" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -127,7 +127,7 @@ func ShareStatus(c *gin.Context) {
 	uid := u.(int64)
 
 	param := struct {
-		Token string `uri:"token" bindings:"required"`
+		Token string `uri:"token" binding:"required"`
 	}{}
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -264,9 +264,9 @@ func DownloadShareFile(c *gin.Context) {
 	u, _ := c.Get("cur_user_id")
 	uid := u.(int64)
 	body := struct {
-		AccessToken string `json:"access_token" bindings:"required"`
-		FileId      int64  `json:"file_id" bindings:"required"`
-		Path        string `json:"path" bindings:"required"`
+		AccessToken string `json:"access_token" binding:"required"`
+		FileId      int64  `json:"file_id" binding:"required"`
+		Path        string `json:"path" binding:"required"`
 	}{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -291,7 +291,7 @@ func DownloadShareFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Success",
+		"msg":    "Success",
 		"result": resp,
 	})
 }

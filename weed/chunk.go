@@ -225,7 +225,7 @@ func (f *FileUploadMeta) GetChunkHashFromCache(chunk *ChunkInfo) (string, error)
 
 func (f *FileUploadMeta) CheckFileHash() error {
 	var hash strings.Builder
-	hash.Grow(32*len(f.Chunks)) // md5 hash
+	hash.Grow(32 * len(f.Chunks)) // md5 hash
 
 	// make a copy and sort by offset
 	cs := make([]*ChunkInfo, len(f.Chunks))
@@ -256,7 +256,7 @@ func NewUploadMeta(ownerId int64, folderId int64, filename string, hash string, 
 		Hash:          hash,
 		Mime:          mime,
 		Status:        Inited,
-		ChunkManifest: ChunkManifest{Size: size, Name: filename},
+		ChunkManifest: ChunkManifest{Size: size, Name: filename, Mime:mime},
 		ChunkSize:     config.DefaultChunkSize,
 	}
 	meta.init()

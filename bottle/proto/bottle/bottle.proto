@@ -29,6 +29,8 @@ service BottleService {
     rpc CreateDownloadUrl(CreateDownloadUrlRequest) returns (CreateDownloadUrlResponse) {}
     rpc GetWeedDownloadUrl(GetWeedDownloadUrlRequest) returns (GetWeedDownloadUrlResponse) {}
 
+    rpc GetImageThumbnail(GetImageThumbnailRequest) returns (GetImageThumbnailResponse) {}
+
     rpc ValidateEntry(ValidateEntryRequest) returns (ValidateEntryResponse) {}
     rpc GetEntryParents(GetEntryParentsRequest) returns (GetEntryParentsResponse) {}
 }
@@ -226,6 +228,18 @@ message GetWeedDownloadUrlRequest {
 
 message GetWeedDownloadUrlResponse {
     string weed_url = 1;
+}
+
+message GetImageThumbnailRequest {
+    int64 file_id = 1;
+    int64 owner_id = 2;
+    int64 user_id = 3;
+    int32 height = 4;
+    int32 width = 5;
+}
+
+message GetImageThumbnailResponse {
+    bytes thumbnail = 1;
 }
 
 message ValidateEntryRequest {

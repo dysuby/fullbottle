@@ -44,13 +44,13 @@ func (*UploadHandler) GenerateUploadToken(ctx context.Context, req *pb.GenerateU
 
 	// check file is already uploaded, then client only need to call UploadFile without file data
 	bottleClient := common.BottleSrvClient()
-	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash:hash})
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash: hash})
 	if err != nil {
 		return err
 	} else if metaResp.Id == 0 {
-		resp.NeedUpload = true	// meta not found
+		resp.NeedUpload = true // meta not found
 	} else {
-		fileResp, err := bottleClient.GetFileByMeta(ctx, &pbbottle.GetFileByMetaRequest{Name:filename, FolderId:folderId, OwnerId:ownerId, MetaId:metaResp.Id})
+		fileResp, err := bottleClient.GetFileByMeta(ctx, &pbbottle.GetFileByMetaRequest{Name: filename, FolderId: folderId, OwnerId: ownerId, MetaId: metaResp.Id})
 		if err != nil {
 			return err
 		} else if fileResp.File.Id != 0 {
@@ -96,10 +96,10 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 
 	// check file is already uploaded
 	bottleClient := common.BottleSrvClient()
-	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{ Hash:upload.Hash })
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash: upload.Hash})
 	if err != nil {
 		return err
-	}  else if metaResp.Id != 0 {
+	} else if metaResp.Id != 0 {
 		upload.SetStatus(weed.WeedDone)
 	} else {
 		// upload chunk
@@ -128,10 +128,10 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		if metaResp.Id == 0 {
 			b, _ := upload.ChunkManifest.Json()
 			createMeta, err := bottleClient.CreateFileMeta(ctx, &pbbottle.CreateFileMetaRequest{
-				Fid:                  upload.Fid,
-				Size:                 upload.Size,
-				Hash:                 upload.Hash,
-				ChunkManifest:        string(b),
+				Fid:           upload.Fid,
+				Size:          upload.Size,
+				Hash:          upload.Hash,
+				ChunkManifest: string(b),
 			})
 			if err != nil {
 				return err
@@ -140,10 +140,10 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		}
 
 		_, err := bottleClient.CreateFile(ctx, &pbbottle.CreateFileRequest{
-			OwnerId:              upload.OwnerId,
-			FolderId:             upload.FolderId,
-			Name:                 upload.Name,
-			MetaId:               metaResp.Id,
+			OwnerId:  upload.OwnerId,
+			FolderId: upload.FolderId,
+			Name:     upload.Name,
+			MetaId:   metaResp.Id,
 		})
 		if err != nil {
 			return err
@@ -170,7 +170,7 @@ func (*UploadHandler) GetFileUploadedChunks(ctx context.Context, req *pb.GetFile
 	resp.NeedUpload = true
 
 	bottleClient := common.BottleSrvClient()
-	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash:upload.Hash})
+	metaResp, err := bottleClient.GetFileMeta(ctx, &pbbottle.GetFileMetaRequest{Hash: upload.Hash})
 	if err != nil {
 		return err
 	} else if metaResp.Id != 0 {

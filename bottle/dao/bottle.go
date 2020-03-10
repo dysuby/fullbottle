@@ -6,13 +6,6 @@ import (
 	"github.com/vegchic/fullbottle/common/db"
 )
 
-const (
-	B = 1 << (10 * iota)
-	KB
-	MB
-	GB
-)
-
 const RootId int64 = -1
 
 // user store space metadata

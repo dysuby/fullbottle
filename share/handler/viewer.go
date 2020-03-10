@@ -109,7 +109,7 @@ func (*ViewerHandler) GetShareDownloadUrl(ctx context.Context, req *pb.GetShareD
 	}
 
 	bottleClient := common.BottleSrvClient()
-	fileResp, err := bottleClient.CreateDownloadUrl(ctx, &pbbottle.CreateDownloadUrlRequest{OwnerId: info.SharerId, FileId: fileId, UserId:viewerId})
+	fileResp, err := bottleClient.CreateDownloadUrl(ctx, &pbbottle.CreateDownloadUrlRequest{OwnerId: info.SharerId, FileId: fileId, UserId: viewerId})
 	if err != nil {
 		return err
 	}

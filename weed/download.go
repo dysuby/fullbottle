@@ -30,7 +30,7 @@ func FetchFile(fid string) (resp *http.Response, err error) {
 		return nil, common.NewWeedError(err)
 	}
 	if !IsSuccessStatus(resp.StatusCode) {
-		return nil, common.NewWeedError(errors.New("weed return unexpected statuscode: "+strconv.Itoa(resp.StatusCode)))
+		return nil, common.NewWeedError(errors.New("weed return unexpected statuscode: " + strconv.Itoa(resp.StatusCode)))
 	}
 	return
 }

@@ -193,7 +193,7 @@ func GetUserAvatar(c *gin.Context) {
 	reader := bytes.NewReader(b)
 
 	c.Header("Content-Type", resp.ContentType)
-	c.DataFromReader(http.StatusOK, int64(reader.Len()), "*", reader, map[string]string{})
+	c.DataFromReader(http.StatusOK, int64(reader.Len()), resp.ContentType, reader, map[string]string{})
 }
 
 func UserLogin(c *gin.Context) {

@@ -37,7 +37,7 @@ func (f *FileHandler) GetFileInfo(ctx context.Context, req *pb.GetFileInfoReques
 
 // return id=0 when file not found, this rpc just for upload check
 func (f *FileHandler) GetFileByMeta(ctx context.Context, req *pb.GetFileByMetaRequest, resp *pb.GetFileByMetaResponse) error {
-	file, err := dao.GetFileByUploadMeta(req.GetOwnerId(), req.GetName(), req.GetFolderId(),req.GetMetaId())
+	file, err := dao.GetFileByUploadMeta(req.GetOwnerId(), req.GetName(), req.GetFolderId(), req.GetMetaId())
 	if err != nil {
 		return err
 	} else if file == nil {
@@ -68,9 +68,9 @@ func (f *FileHandler) CreateFile(ctx context.Context, req *pb.CreateFileRequest,
 
 	info := &dao.FileInfo{
 		FolderId: req.GetFolderId(),
-		OwnerId: req.GetOwnerId(),
-		FileId: req.GetMetaId(),
-		Name: req.GetName(),
+		OwnerId:  req.GetOwnerId(),
+		FileId:   req.GetMetaId(),
+		Name:     req.GetName(),
 	}
 
 	err = service.CreateFile(info, meta)
@@ -147,9 +147,9 @@ func (f *FileHandler) GetFileMeta(ctx context.Context, req *pb.GetFileMetaReques
 
 func (f *FileHandler) CreateFileMeta(ctx context.Context, req *pb.CreateFileMetaRequest, resp *pb.CreateFileMetaResponse) error {
 	meta := &dao.FileMeta{
-		Fid: req.GetFid(),
-		Hash: req.GetHash(),
-		Size: req.GetSize(),
+		Fid:           req.GetFid(),
+		Hash:          req.GetHash(),
+		Size:          req.GetSize(),
 		ChunkManifest: req.GetChunkManifest(),
 	}
 

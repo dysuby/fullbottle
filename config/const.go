@@ -21,6 +21,7 @@ const AvatarMaxSize = 1 << 20 // 1mb
 
 const DefaultCapacity = 1 << 30 // 1GB
 const DefaultChunkSize = 1 << 20
+const PreviewSizeLimit = 5 << 20 // 5mb
 
 const (
 	MaxMsgSendSize = 64 << 20 // client

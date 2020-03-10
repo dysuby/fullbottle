@@ -66,6 +66,7 @@ func registerV1Routes(g *gin.Engine) {
 
 		// raw download
 		api.GET("/download/file/:download_token", handler.DownloadFile)
+		api.GET("/download/image/thumbnail", handler.GetImageThumbnail)
 	}
 
 	g.NoRoute(func(ctx *gin.Context) {

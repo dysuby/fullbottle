@@ -41,15 +41,18 @@ type BottleService interface {
 	CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...client.CallOption) (*CreateFolderResponse, error)
 	UpdateFolder(ctx context.Context, in *UpdateFolderRequest, opts ...client.CallOption) (*UpdateFolderResponse, error)
 	RemoveFolder(ctx context.Context, in *RemoveFolderRequest, opts ...client.CallOption) (*RemoveFolderResponse, error)
+	// return id=0 when meta not found, this rpc just for upload check
 	GetFileMeta(ctx context.Context, in *GetFileMetaRequest, opts ...client.CallOption) (*GetFileMetaResponse, error)
 	CreateFileMeta(ctx context.Context, in *CreateFileMetaRequest, opts ...client.CallOption) (*CreateFileMetaResponse, error)
 	GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...client.CallOption) (*GetFileInfoResponse, error)
+	// return id=0 when file not found, this rpc just for upload check
 	GetFileByMeta(ctx context.Context, in *GetFileByMetaRequest, opts ...client.CallOption) (*GetFileByMetaResponse, error)
 	CreateFile(ctx context.Context, in *CreateFileRequest, opts ...client.CallOption) (*CreateFileResponse, error)
 	UpdateFile(ctx context.Context, in *UpdateFileRequest, opts ...client.CallOption) (*UpdateFileResponse, error)
 	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...client.CallOption) (*RemoveFileResponse, error)
 	CreateDownloadUrl(ctx context.Context, in *CreateDownloadUrlRequest, opts ...client.CallOption) (*CreateDownloadUrlResponse, error)
 	GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownloadUrlRequest, opts ...client.CallOption) (*GetWeedDownloadUrlResponse, error)
+	GetImageThumbnail(ctx context.Context, in *GetImageThumbnailRequest, opts ...client.CallOption) (*GetImageThumbnailResponse, error)
 	ValidateEntry(ctx context.Context, in *ValidateEntryRequest, opts ...client.CallOption) (*ValidateEntryResponse, error)
 	GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, opts ...client.CallOption) (*GetEntryParentsResponse, error)
 }
@@ -226,6 +229,16 @@ func (c *bottleService) GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownl
 	return out, nil
 }
 
+func (c *bottleService) GetImageThumbnail(ctx context.Context, in *GetImageThumbnailRequest, opts ...client.CallOption) (*GetImageThumbnailResponse, error) {
+	req := c.c.NewRequest(c.name, "BottleService.GetImageThumbnail", in)
+	out := new(GetImageThumbnailResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bottleService) ValidateEntry(ctx context.Context, in *ValidateEntryRequest, opts ...client.CallOption) (*ValidateEntryResponse, error) {
 	req := c.c.NewRequest(c.name, "BottleService.ValidateEntry", in)
 	out := new(ValidateEntryResponse)
@@ -256,15 +269,18 @@ type BottleServiceHandler interface {
 	CreateFolder(context.Context, *CreateFolderRequest, *CreateFolderResponse) error
 	UpdateFolder(context.Context, *UpdateFolderRequest, *UpdateFolderResponse) error
 	RemoveFolder(context.Context, *RemoveFolderRequest, *RemoveFolderResponse) error
+	// return id=0 when meta not found, this rpc just for upload check
 	GetFileMeta(context.Context, *GetFileMetaRequest, *GetFileMetaResponse) error
 	CreateFileMeta(context.Context, *CreateFileMetaRequest, *CreateFileMetaResponse) error
 	GetFileInfo(context.Context, *GetFileInfoRequest, *GetFileInfoResponse) error
+	// return id=0 when file not found, this rpc just for upload check
 	GetFileByMeta(context.Context, *GetFileByMetaRequest, *GetFileByMetaResponse) error
 	CreateFile(context.Context, *CreateFileRequest, *CreateFileResponse) error
 	UpdateFile(context.Context, *UpdateFileRequest, *UpdateFileResponse) error
 	RemoveFile(context.Context, *RemoveFileRequest, *RemoveFileResponse) error
 	CreateDownloadUrl(context.Context, *CreateDownloadUrlRequest, *CreateDownloadUrlResponse) error
 	GetWeedDownloadUrl(context.Context, *GetWeedDownloadUrlRequest, *GetWeedDownloadUrlResponse) error
+	GetImageThumbnail(context.Context, *GetImageThumbnailRequest, *GetImageThumbnailResponse) error
 	ValidateEntry(context.Context, *ValidateEntryRequest, *ValidateEntryResponse) error
 	GetEntryParents(context.Context, *GetEntryParentsRequest, *GetEntryParentsResponse) error
 }
@@ -287,6 +303,7 @@ func RegisterBottleServiceHandler(s server.Server, hdlr BottleServiceHandler, op
 		RemoveFile(ctx context.Context, in *RemoveFileRequest, out *RemoveFileResponse) error
 		CreateDownloadUrl(ctx context.Context, in *CreateDownloadUrlRequest, out *CreateDownloadUrlResponse) error
 		GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownloadUrlRequest, out *GetWeedDownloadUrlResponse) error
+		GetImageThumbnail(ctx context.Context, in *GetImageThumbnailRequest, out *GetImageThumbnailResponse) error
 		ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error
 		GetEntryParents(ctx context.Context, in *GetEntryParentsRequest, out *GetEntryParentsResponse) error
 	}
@@ -363,6 +380,10 @@ func (h *bottleServiceHandler) CreateDownloadUrl(ctx context.Context, in *Create
 
 func (h *bottleServiceHandler) GetWeedDownloadUrl(ctx context.Context, in *GetWeedDownloadUrlRequest, out *GetWeedDownloadUrlResponse) error {
 	return h.BottleServiceHandler.GetWeedDownloadUrl(ctx, in, out)
+}
+
+func (h *bottleServiceHandler) GetImageThumbnail(ctx context.Context, in *GetImageThumbnailRequest, out *GetImageThumbnailResponse) error {
+	return h.BottleServiceHandler.GetImageThumbnail(ctx, in, out)
 }
 
 func (h *bottleServiceHandler) ValidateEntry(ctx context.Context, in *ValidateEntryRequest, out *ValidateEntryResponse) error {

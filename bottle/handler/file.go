@@ -41,7 +41,8 @@ func (f *FileHandler) GetFileByMeta(ctx context.Context, req *pb.GetFileByMetaRe
 	if err != nil {
 		return err
 	} else if file == nil {
-		file = &dao.FileInfo{}
+		resp.File = &pb.FileInfo{}
+		return nil
 	}
 
 	resp.File = &pb.FileInfo{
@@ -133,7 +134,7 @@ func (f *FileHandler) GetFileMeta(ctx context.Context, req *pb.GetFileMetaReques
 	if err != nil {
 		return err
 	} else if meta == nil {
-		meta = &dao.FileMeta{}
+		return nil
 	}
 
 	resp.Id = meta.ID

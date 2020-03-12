@@ -89,12 +89,12 @@ func UploadFile(c *gin.Context) {
 	body := struct {
 		File      *multipart.FileHeader `form:"file"`
 		Token     string                `form:"token" binding:"required"`
-		Offset    int64                 `form:"offset" binding:"required"`
+		Offset    int64                 `form:"offset"`
 		ChunkHash string                `form:"chunk_hash" binding:"required"`
 	}{}
 	if err := c.ShouldBind(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"msg": "Invalid token",
+			"msg": err.Error(),
 		})
 		return
 	}

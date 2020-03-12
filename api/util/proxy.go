@@ -20,7 +20,7 @@ func DownloadProxy(c *gin.Context, rawUrl string) {
 	weedReq, _ := http.NewRequest("GET", downloadUrl.String(), bytes.NewReader([]byte{}))
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
-
+			req.Header = c.Request.Header
 		},
 		ModifyResponse: func(r *http.Response) error {
 			// make it download

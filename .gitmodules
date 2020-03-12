@@ -1,0 +1,3 @@
+[submodule "fullbottle-fe"]
+	path = fullbottle-fe
+	url = https://github.com/vegchic/fullbottle-fe

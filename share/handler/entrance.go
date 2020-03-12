@@ -19,7 +19,7 @@ type EntranceHandler struct{}
 func (*EntranceHandler) ShareStatus(ctx context.Context, req *pb.ShareStatusRequest, resp *pb.ShareStatusResponse) error {
 	token := req.GetToken()
 
-	info, err := dao.GetShareByToken(token)
+	info, err := dao.GetShareByToken(token, false)
 	if err != nil {
 		return err
 	} else if info == nil {
@@ -44,7 +44,7 @@ func (*EntranceHandler) AccessShare(ctx context.Context, req *pb.AccessShareRequ
 	token := req.GetToken()
 	code := req.GetCode()
 
-	info, err := dao.GetShareByToken(token)
+	info, err := dao.GetShareByToken(token, true)
 	if err != nil {
 		return err
 	} else if info == nil {
@@ -67,5 +67,6 @@ func (*EntranceHandler) AccessShare(ctx context.Context, req *pb.AccessShareRequ
 	}
 
 	resp.AccessToken = at.Token
+	resp.Exp = time.Now().Add(24 * time.Hour).Unix()
 	return nil
 }

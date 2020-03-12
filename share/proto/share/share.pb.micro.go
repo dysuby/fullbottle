@@ -46,6 +46,7 @@ type ShareService interface {
 	CreateShare(ctx context.Context, in *CreateShareRequest, opts ...client.CallOption) (*CreateShareResponse, error)
 	UpdateShare(ctx context.Context, in *UpdateShareRequest, opts ...client.CallOption) (*UpdateShareResponse, error)
 	CancelShare(ctx context.Context, in *CancelShareRequest, opts ...client.CallOption) (*CancelShareResponse, error)
+	RemoveShareEntry(ctx context.Context, in *RemoveShareEntryRequest, opts ...client.CallOption) (*RemoveShareEntryResponse, error)
 }
 
 type shareService struct {
@@ -140,6 +141,16 @@ func (c *shareService) CancelShare(ctx context.Context, in *CancelShareRequest, 
 	return out, nil
 }
 
+func (c *shareService) RemoveShareEntry(ctx context.Context, in *RemoveShareEntryRequest, opts ...client.CallOption) (*RemoveShareEntryResponse, error) {
+	req := c.c.NewRequest(c.name, "ShareService.RemoveShareEntry", in)
+	out := new(RemoveShareEntryResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for ShareService service
 
 type ShareServiceHandler interface {
@@ -154,6 +165,7 @@ type ShareServiceHandler interface {
 	CreateShare(context.Context, *CreateShareRequest, *CreateShareResponse) error
 	UpdateShare(context.Context, *UpdateShareRequest, *UpdateShareResponse) error
 	CancelShare(context.Context, *CancelShareRequest, *CancelShareResponse) error
+	RemoveShareEntry(context.Context, *RemoveShareEntryRequest, *RemoveShareEntryResponse) error
 }
 
 func RegisterShareServiceHandler(s server.Server, hdlr ShareServiceHandler, opts ...server.HandlerOption) error {
@@ -166,6 +178,7 @@ func RegisterShareServiceHandler(s server.Server, hdlr ShareServiceHandler, opts
 		CreateShare(ctx context.Context, in *CreateShareRequest, out *CreateShareResponse) error
 		UpdateShare(ctx context.Context, in *UpdateShareRequest, out *UpdateShareResponse) error
 		CancelShare(ctx context.Context, in *CancelShareRequest, out *CancelShareResponse) error
+		RemoveShareEntry(ctx context.Context, in *RemoveShareEntryRequest, out *RemoveShareEntryResponse) error
 	}
 	type ShareService struct {
 		shareService
@@ -208,4 +221,8 @@ func (h *shareServiceHandler) UpdateShare(ctx context.Context, in *UpdateShareRe
 
 func (h *shareServiceHandler) CancelShare(ctx context.Context, in *CancelShareRequest, out *CancelShareResponse) error {
 	return h.ShareServiceHandler.CancelShare(ctx, in, out)
+}
+
+func (h *shareServiceHandler) RemoveShareEntry(ctx context.Context, in *RemoveShareEntryRequest, out *RemoveShareEntryResponse) error {
+	return h.ShareServiceHandler.RemoveShareEntry(ctx, in, out)
 }

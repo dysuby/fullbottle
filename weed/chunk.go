@@ -256,7 +256,7 @@ func NewUploadMeta(ownerId int64, folderId int64, filename string, hash string, 
 		Hash:          hash,
 		Mime:          mime,
 		Status:        Inited,
-		ChunkManifest: ChunkManifest{Size: size, Name: filename, Mime:mime},
+		ChunkManifest: ChunkManifest{Size: size, Name: filename, Mime: mime},
 		ChunkSize:     config.DefaultChunkSize,
 	}
 	meta.init()

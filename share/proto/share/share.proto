@@ -18,6 +18,7 @@ service ShareService {
     rpc CreateShare(CreateShareRequest) returns (CreateShareResponse) {}
 	rpc UpdateShare(UpdateShareRequest) returns (UpdateShareResponse) {}
 	rpc CancelShare(CancelShareRequest) returns (CancelShareResponse) {}
+	rpc RemoveShareEntry(RemoveShareEntryRequest) returns (RemoveShareEntryResponse) {}
 }
 
 message ShareStatusRequest {
@@ -37,13 +38,15 @@ message AccessShareRequest {
     int64 viewer_id = 3;
 }
 
-message AccessShareResponse {
+    message AccessShareResponse {
     string access_token = 1;
+    int64 exp = 2;
 }
 
 message GetShareInfoRequest {
     string access_token = 1;
-    int64 viewer_id = 2;
+    string token = 2;
+    int64 viewer_id = 3;
 }
 
 message GetShareInfoResponse {
@@ -56,8 +59,9 @@ message GetShareInfoResponse {
 
 message GetShareFolderRequest {
     string access_token = 1;
-    string path = 2;
-    int64 viewer_id = 3;
+    string token = 2;
+    string path = 3;
+    int64 viewer_id = 4;
 }
 
 message GetShareFolderResponse {
@@ -66,9 +70,10 @@ message GetShareFolderResponse {
 
 message GetShareDownloadUrlRequest {
     string access_token = 1;
-    int64 file_id = 2;
-    string path = 3;
-    int64 viewer_id = 4;
+    string token = 2;
+    int64 file_id = 3;
+    string path = 4;
+    int64 viewer_id = 5;
 }
 
 message GetShareDownloadUrlResponse {
@@ -109,5 +114,17 @@ message CancelShareRequest {
 }
 
 message CancelShareResponse {
+
+}
+
+message RemoveShareEntryRequest {
+    string token = 1;
+    int64 sharer_id = 2;
+
+    repeated int64 remove_files = 3;
+    repeated int64 remove_folders = 4;
+}
+
+message RemoveShareEntryResponse {
 
 }

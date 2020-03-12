@@ -110,6 +110,19 @@ func CancelShare(info *ShareInfo, status int32) error {
 	return nil
 }
 
+func RemoveShareEntry(targets []*ShareRef) error {
+	return db.DB().Transaction(func(tx *gorm.DB) error {
+		for _, ref := range targets {
+			ref.Status = db.Invalid
+			if err := tx.Save(ref).Error; err != nil {
+				return common.NewDBError(err)
+			}
+		}
+
+		return nil
+	})
+}
+
 func GetShareById(sharerId int64, id int64) (*ShareInfo, error) {
 	var info ShareInfo
 	if err := db.DB().Where("id = ? AND sharer_id = ? AND status = ?", id, sharerId, db.Valid).First(&info).Error; err != nil {
@@ -121,9 +134,13 @@ func GetShareById(sharerId int64, id int64) (*ShareInfo, error) {
 	return &info, nil
 }
 
-func GetShareByToken(token string) (*ShareInfo, error) {
+func GetShareByToken(token string, onlyValid bool) (*ShareInfo, error) {
 	var info ShareInfo
-	if err := db.DB().Where("token = ? AND status = ?", token, db.Valid).Find(&info).Error; err != nil {
+	query := db.DB().Where("token = ?", token)
+	if onlyValid {
+		query = query.Where("status = ?", db.Valid)
+	}
+	if err := query.Find(&info).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}

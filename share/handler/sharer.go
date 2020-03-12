@@ -38,7 +38,7 @@ func (*SharerHandler) CreateShare(ctx context.Context, req *pb.CreateShareReques
 
 	token := util.GenToken(10)
 	for true {
-		if o, err := dao.GetShareByToken(token); err != nil {
+		if o, err := dao.GetShareByToken(token, true); err != nil {
 			return err
 		} else if o != nil {
 			token = util.GenToken(10)
@@ -76,7 +76,7 @@ func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareReques
 	code := req.GetCode()
 	exp := req.GetExp()
 
-	info, err := dao.GetShareByToken(token)
+	info, err := dao.GetShareByToken(token, true)
 	if err != nil {
 		return err
 	} else if info == nil || info.SharerId != sharerId {
@@ -89,9 +89,9 @@ func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareReques
 		if expire.Before(time.Now()) {
 			return errors.New(config.ShareSrvName, "Invalid expire: "+expire.String(), common.BadArgError)
 		}
-	}
-	if !expire.IsZero() {
 		info.ExpireTime = &expire
+	} else {
+		info.ExpireTime = nil
 	}
 
 	if !req.GetIsPublic() {
@@ -99,6 +99,7 @@ func (*SharerHandler) UpdateShare(ctx context.Context, req *pb.UpdateShareReques
 		info.Code = util.Md5(code)
 	} else {
 		info.Privacy = dao.Public
+		info.Code = ""
 	}
 
 	return dao.UpdateShare(info)
@@ -108,7 +109,7 @@ func (*SharerHandler) CancelShare(ctx context.Context, req *pb.CancelShareReques
 	token := req.GetToken()
 	sharerId := req.GetSharerId()
 
-	info, err := dao.GetShareByToken(token)
+	info, err := dao.GetShareByToken(token, true)
 	if err != nil {
 		return err
 	} else if info == nil || info.SharerId != sharerId {
@@ -116,4 +117,41 @@ func (*SharerHandler) CancelShare(ctx context.Context, req *pb.CancelShareReques
 	}
 
 	return dao.CancelShare(info, db.Canceled)
+}
+
+func (*SharerHandler) RemoveShareEntry(ctx context.Context, req *pb.RemoveShareEntryRequest, resp *pb.RemoveShareEntryResponse) error {
+	token := req.GetToken()
+	sharerId := req.GetSharerId()
+	removeFiles := req.GetRemoveFiles()
+	removeFolders := req.GetRemoveFolders()
+
+	info, err := dao.GetShareByToken(token, true)
+	if err != nil {
+		return err
+	} else if info == nil || info.SharerId != sharerId {
+		return errors.New(config.ShareSrvName, "Share info not found", common.NotFoundError)
+	}
+
+	fileMap := make(map[int64]bool)
+	folderMap := make(map[int64]bool)
+	sliceToMap := func(s []int64, m map[int64]bool) {
+		for _, v := range s {
+			m[v] = true
+		}
+	}
+	sliceToMap(removeFiles, fileMap)
+	sliceToMap(removeFolders, folderMap)
+
+	entries, err := dao.GetShareEntry(info.ID)
+	if err != nil {
+		return err
+	}
+	var removeEntries []*dao.ShareRef
+	for _, e := range entries {
+		if (e.EntryType == dao.File && fileMap[e.EntryId]) || (e.EntryType == dao.Folder && folderMap[e.EntryId]) {
+			removeEntries = append(removeEntries, e)
+		}
+	}
+
+	return dao.RemoveShareEntry(removeEntries)
 }

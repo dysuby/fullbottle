@@ -24,8 +24,8 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 
 	var folder *dao.FolderInfo
 
-	var filterFiles []int64
-	var filterFolders []int64
+	var filterFiles []int64 = nil
+	var filterFolders []int64 = nil
 
 	// determine folder to scan
 	var err error
@@ -59,12 +59,25 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 		// if path is empty, then break
 		if len(names) == 0 {
 			folder = baseFolder
-			filterFiles = path.GetFilterFiles()
-			filterFolders = path.GetFilterFolders()
+
+			// if some of filter given, than use filter
+			if path.FilterFiles != nil || path.FilterFolders != nil {
+				if path.FilterFiles == nil {
+					filterFiles = make([]int64, 0)
+				} else {
+					filterFiles = path.FilterFiles
+				}
+
+				if path.FilterFolders == nil {
+					filterFolders = make([]int64, 0)
+				} else {
+					filterFolders = path.FilterFolders
+				}
+			}
 			break
 		}
 		// find folder by path
-		folder, err = dao.GetFoldersByPath(ownerId, names, baseFolder.ID, path.GetFilterFolders())
+		folder, err = dao.GetFoldersByPath(ownerId, names, baseFolder.ID, filterFolders)
 	default:
 
 	}

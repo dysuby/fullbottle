@@ -83,11 +83,11 @@ func GetImageThumbnail(c *gin.Context) {
 
 	bottleClient := common.BottleSrvClient()
 	resp, err := bottleClient.GetImageThumbnail(util.RpcContext(c), &pbbottle.GetImageThumbnailRequest{
-		FileId:               query.FileId,
-		OwnerId:              uid,
-		UserId:               uid,
-		Height:               query.Height,
-		Width:                query.Width,
+		FileId:  query.FileId,
+		OwnerId: uid,
+		UserId:  uid,
+		Height:  query.Height,
+		Width:   query.Width,
 	})
 	if err != nil {
 		e := errors.Parse(err.Error())

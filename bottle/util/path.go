@@ -10,5 +10,11 @@ func SplitPath(p string) []string {
 	}
 
 	res := strings.Split(p, "/")
+	if res[0] == "" {
+		res = res[1:]
+	}
+	if len(res) > 0 && res[len(res)-1] == "" {
+		res = res[:len(res)-1]
+	}
 	return res
 }

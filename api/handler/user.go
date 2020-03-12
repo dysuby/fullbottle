@@ -230,3 +230,35 @@ func UserLogin(c *gin.Context) {
 		},
 	})
 }
+
+func GetUserPublic(c *gin.Context) {
+	query := struct {
+		Uid int64 `form:"uid" binding:"required"`
+	}{}
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "Invalid uid",
+		})
+		return
+	}
+
+	client := common.UserSrvClient()
+	resp, err := client.GetUserInfo(util.RpcContext(c), &pbuser.GetUserRequest{Uid: query.Uid})
+	if err != nil {
+		e := errors.Parse(err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"msg": "avatar not found: " + e.Detail,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Success",
+		"result": gin.H{
+			"uid":        resp.Uid,
+			"email":      resp.Email,
+			"username":   resp.Username,
+			"avatar_fid": resp.AvatarFid,
+		},
+	})
+}

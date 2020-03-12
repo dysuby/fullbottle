@@ -26,6 +26,7 @@ func registerV1Routes(g *gin.Engine) {
 		api.POST("/login", handler.UserLogin)
 
 		api.GET("/users/avatar", handler.GetUserAvatar) // no permission asked
+		api.GET("/users/public", handler.GetUserPublic)
 
 		api.Use(middleware.LoginRequired())
 
@@ -54,9 +55,10 @@ func registerV1Routes(g *gin.Engine) {
 		api.POST("/space/download/file", handler.CreateDownloadUrl)
 
 		// share
-		api.POST("/share", handler.CreateShare)          // create share
-		api.PUT("/share/:token", handler.UpdateShare)    // modify share
-		api.DELETE("/share/:token", handler.CancelShare) // cancel share
+		api.POST("/share", handler.CreateShare)                         // create share
+		api.PUT("/share/:token", handler.UpdateShare)                   // modify share
+		api.DELETE("/share/:token", handler.CancelShare)                // cancel share
+		api.DELETE("/share/:token/entries", handler.RemoveShareEntries) // remove share entries
 
 		api.GET("/share/:token/status", handler.ShareStatus)  // get share status
 		api.POST("/share/:token/access", handler.AccessShare) // try to access share

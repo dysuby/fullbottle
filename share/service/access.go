@@ -58,14 +58,14 @@ func NewAccessToken(id, sharerId, viewerId int64) *AccessToken {
 	return at
 }
 
-func ValidateAccessToken(token string, viewerId int64) (AccessToken, error) {
+func ValidateAccessToken(accessToken string, viewerId int64) (AccessToken, error) {
 	var at AccessToken
-	if err := kv.GetM(token, &at); err != nil {
+	if err := kv.GetM(accessToken, &at); err != nil {
 		return at, err
 	}
 
 	if viewerId != at.ViewerId {
-		return at, errors.New(config.BottleSrvName, "Invalid token", common.ConflictError)
+		return at, errors.New(config.ShareSrvName, "Invalid token", common.ConflictError)
 	}
 	return at, nil
 }

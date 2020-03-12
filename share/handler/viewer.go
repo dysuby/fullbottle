@@ -24,7 +24,9 @@ func (*ViewerHandler) GetShareInfo(ctx context.Context, req *pb.GetShareInfoRequ
 	if err != nil {
 		return err
 	} else if info == nil {
-		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
+		return errors.New(config.ShareSrvName, "Share not found", common.NotFoundError)
+	} else if req.GetToken() != info.Token {
+		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
 	}
 
 	metrics, err := dao.GetShareMetrics(info.ID)
@@ -62,14 +64,21 @@ func (*ViewerHandler) GetShareFolder(ctx context.Context, req *pb.GetShareFolder
 	if err != nil {
 		return err
 	} else if info == nil {
-		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
+		return errors.New(config.ShareSrvName, "Share not found", common.NotFoundError)
+	} else if req.GetToken() != info.Token {
+		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
 	}
 
 	folderResp, err := service.GetShareFolder(ctx, info, path)
 	if err != nil {
 		return err
 	}
-	resp.Folder = folderResp.GetFolder()
+
+	resp.Folder = &pbbottle.FolderInfo{
+		Folders: folderResp.Folder.Folders,
+		Files:   folderResp.Folder.Files,
+	}
+
 	return nil
 }
 
@@ -86,7 +95,9 @@ func (*ViewerHandler) GetShareDownloadUrl(ctx context.Context, req *pb.GetShareD
 	if err != nil {
 		return err
 	} else if info == nil {
-		return errors.New(config.BottleSrvName, "Share not found", common.NotFoundError)
+		return errors.New(config.ShareSrvName, "Share not found", common.NotFoundError)
+	} else if req.GetToken() != info.Token {
+		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
 	}
 
 	path := req.GetPath()

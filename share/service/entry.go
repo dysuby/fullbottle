@@ -33,6 +33,10 @@ func GetShareFolder(ctx context.Context, info *dao.ShareInfo, path string) (*pbb
 	if err != nil {
 		return nil, err
 	}
+	if len(entries) == 0 {
+		return &pbbottle.GetFolderInfoResponse{Folder: &pbbottle.FolderInfo{}}, nil
+	}
+
 	var folderIds []int64
 	var fileIds []int64
 	for _, e := range entries {

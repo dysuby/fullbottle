@@ -13,10 +13,9 @@ services:
       - "2380:2380"
 
   nginx:
-    image: nginx:latest
+    build: ./fullbottle-fe
     restart: "always"
     volumes:
-      - ./fullbottle-fe/dist:/usr/share/nginx/html:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - fullbottle-network

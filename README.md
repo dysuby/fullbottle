@@ -69,3 +69,29 @@
 ├── util    # simple utils, like hash
 └── weed    # weed client, supporting chunk upload
 ```
+
+## Deploy
+
+touch a `.env` in project root, like:
+
+```shell script
+# mysql
+MYSQL_ROOT_PASSWORD=
+MYSQL_USER=
+MYSQL_PASSWORD=
+MYSQL_DATABASE=
+MYSQL_URL=
+
+# redis
+REDIS_PASSWORD=
+REDIS_URL=
+
+# app
+APP_SECRET=
+APP_UPLOAD_SECRET=
+
+# weed
+WEED_MASTER=
+```
+
+then run `./build.sh -a` to build go binaries, `./deploy.sh -a` to deploy it by docker-compose

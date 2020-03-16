@@ -5,7 +5,7 @@ set -ex
 ip=$(curl -s ip.sb)
 export public_ip=$ip  # get host ip
 
-declare -A service_map=(["api"]="api" ["user"]="user-service" ["auth"]="auth-service"
+declare -A service_map=(["api"]="api" ["user"]="user-service"
 ["bottle"]="bottle-service" ["share"]="share-service" ["upload"]="upload-service")
 
 services=""

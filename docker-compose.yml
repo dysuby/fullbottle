@@ -48,10 +48,6 @@ services:
     depends_on:
       - mysql
 
-  auth-service:
-    <<: *service
-    build: ./auth
-
   bottle-service:
     <<: *service
     build: ./bottle

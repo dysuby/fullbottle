@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/micro/go-micro/v2/errors"
+	"github.com/micro/go-micro/v2/metadata"
 	"github.com/sirupsen/logrus"
-	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
 	"github.com/vegchic/fullbottle/common/db"
@@ -122,16 +122,13 @@ func (u *UserHandler) UserLogin(ctx context.Context, req *pb.UserLoginRequest, r
 
 	expire := time.Now().Unix() + config.JwtTokenExpire
 
-	authClient := common.AuthSrvClient()
-	authResp, err := authClient.GenerateJwtToken(ctx, &pbauth.GenerateJwtTokenRequest{
-		UserId: user.ID,
-		Expire: expire,
-	})
+	ip, _ := metadata.Get(ctx, "ip")
+	token, err := util.GenerateJwtToken(user.ID, expire, ip)
 	if err != nil {
-		return err
+		return errors.New(config.UserSrvName, err.Error(), common.JwtError)
 	}
 
-	resp.Token, resp.Expire, resp.Uid = authResp.GetToken(), expire, user.ID
+	resp.Token, resp.Expire, resp.Uid = token, expire, user.ID
 	return nil
 }
 

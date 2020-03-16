@@ -28,9 +28,6 @@
 │   ├── middleware
 │   ├── route
 │   └── util
-├── auth    # provides jwt service
-│   ├── handler
-│   └── proto
 ├── bottle  # provides folder/file curd
 │   ├── dao
 │   ├── handler
@@ -72,7 +69,9 @@
 
 ## Deploy
 
-touch a `.env` in project root, like:
+**Remember to modify docker-compose.yml to close dev port mapping**
+
+Touch a `.env` in project root, like:
 
 ```shell script
 # mysql
@@ -80,18 +79,18 @@ MYSQL_ROOT_PASSWORD=
 MYSQL_USER=
 MYSQL_PASSWORD=
 MYSQL_DATABASE=
-MYSQL_URL=
+MYSQL_URL=mysql:3306
 
 # redis
 REDIS_PASSWORD=
-REDIS_URL=
+REDIS_URL=redis:6379
 
 # app
 APP_SECRET=
 APP_UPLOAD_SECRET=
 
 # weed
-WEED_MASTER=
+WEED_MASTER=http://weed:9333
 ```
 
 then run `./build.sh -a` to build go binaries, `./deploy.sh -a` to deploy it by docker-compose

@@ -3,7 +3,6 @@ package config
 const (
 	ApiName       = "fullbottle.api.v1"
 	UserSrvName   = "fullbottle.srv.user."
-	AuthSrvName   = "fullbottle.srv.auth"
 	BottleSrvName = "fullbottle.srv.bottle"
 	ShareSrvName  = "fullbottle.srv.share"
 	UploadSrvName = "fullbottle.srv.upload"

@@ -4,7 +4,6 @@ import (
 	"github.com/micro/go-micro/v2/client"
 	"github.com/vegchic/fullbottle/config"
 
-	pbauth "github.com/vegchic/fullbottle/auth/proto/auth"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	pbshare "github.com/vegchic/fullbottle/share/proto/share"
 	pbupload "github.com/vegchic/fullbottle/upload/proto/upload"
@@ -21,10 +20,6 @@ func SetClient(client client.Client) {
 
 func UserSrvClient() pbuser.UserService {
 	return pbuser.NewUserService(config.UserSrvName, c)
-}
-
-func AuthSrvClient() pbauth.AuthService {
-	return pbauth.NewAuthService(config.AuthSrvName, c)
 }
 
 func BottleSrvClient() pbbottle.BottleService {

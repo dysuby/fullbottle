@@ -13,7 +13,6 @@ if [[ $1 = "-a" ]]
 then
     build api
     build user
-    build auth
     build bottle
     build share
     build upload

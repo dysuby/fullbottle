@@ -22,6 +22,7 @@ import (
 )
 
 const UserInfoKey = "info:usr_id=%d"
+const UserEmailLockKey = "lock:email=%s"
 
 type UserHandler struct{}
 
@@ -55,7 +56,15 @@ func (u *UserHandler) GetUserInfo(ctx context.Context, req *pb.GetUserRequest, r
 }
 
 func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest, resp *pb.CreateUserResponse) error {
-	if u, err := dao.GetUsersByEmail(req.GetEmail()); err != nil {
+	email := req.GetEmail()
+
+	lock, err := kv.Obtain(fmt.Sprintf(UserEmailLockKey, email), 100*time.Millisecond)
+	if err != nil {
+		return err
+	}
+	defer lock.Release()
+
+	if u, err := dao.GetUsersByEmail(email); err != nil {
 		return err
 	} else if u != nil {
 		return errors.New(config.UserSrvName, "Email existed", common.ExistedError)
@@ -67,7 +76,7 @@ func (u *UserHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest,
 		Password: util.Bcrypt(req.Password),
 	}
 
-	err := dao.CreateUser(user)
+	err = dao.CreateUser(user)
 	if err != nil {
 		return err
 	}

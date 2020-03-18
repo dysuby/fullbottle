@@ -148,36 +148,41 @@ func (f *FileUploadMeta) Upload(raw []byte, offset int64, hash string) error {
 		}
 	}
 
-	// if in manifest step
-	if f.Status == Manifest {
-		// if file hash incorrect, clear all chunks
-		if err := f.CheckFileHash(); err != nil {
-			f.SetStatus(Uploading)
-			for _, c := range f.Chunks {
-				_ = DeleteFile(c.Fid)
-			}
-			f.Chunks = make([]*ChunkInfo, 0)
-			return err
-		}
+	return nil
+}
 
-		// upload
-		key, err := AssignFileKey()
-		if err != nil {
-			return err
-		}
-		b, err := f.ChunkManifest.Json()
-		if err != nil {
-			return err
-		}
-		_, err = UploadSingleFile(bytes.NewBuffer(b), f.Name, key.Fid, key.Url, true)
-		if err != nil {
-			return err
-		}
-
-		// update info
-		f.SetStatus(WeedDone)
-		f.Fid = key.Fid
+func (f *FileUploadMeta) UploadManifest() error {
+	if f.Status != Manifest {
+		return nil
 	}
+
+	// if file hash incorrect, clear all chunks
+	if err := f.CheckFileHash(); err != nil {
+		f.SetStatus(Uploading)
+		for _, c := range f.Chunks {
+			_ = DeleteFile(c.Fid)
+		}
+		f.Chunks = make([]*ChunkInfo, 0)
+		return err
+	}
+
+	// upload
+	key, err := AssignFileKey()
+	if err != nil {
+		return err
+	}
+	b, err := f.ChunkManifest.Json()
+	if err != nil {
+		return err
+	}
+	_, err = UploadSingleFile(bytes.NewBuffer(b), f.Name, key.Fid, key.Url, true)
+	if err != nil {
+		return err
+	}
+
+	// update info
+	f.SetStatus(WeedDone)
+	f.Fid = key.Fid
 	return nil
 }
 

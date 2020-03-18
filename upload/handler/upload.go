@@ -108,18 +108,24 @@ func (*UploadHandler) UploadFile(ctx context.Context, req *pb.UploadFileRequest,
 		chunkHash := req.GetChunkHash()
 		if uploaded, err := upload.CheckChunkOffset(offset, int64(len(raw))); err != nil {
 			return err
-		} else if uploaded {
-			return errors.New(config.UploadSrvName, "The chunk has been uploaded", common.ChunkUploadedError)
+		} else if !uploaded {
+			hash := util.BytesMd5(raw)
+			if hash != chunkHash {
+				return errors.New(config.UploadSrvName, "The chunk hash is incorrect", common.FileUploadingError)
+			}
+
+			err = upload.Upload(raw, offset, hash)
+			if err != nil {
+				return err
+			}
 		}
 
-		hash := util.BytesMd5(raw)
-		if hash != chunkHash {
-			return errors.New(config.UploadSrvName, "The chunk hash is incorrect", common.FileUploadingError)
-		}
-
-		err = upload.Upload(raw, offset, hash)
-		if err != nil {
-			return err
+		// if in manifest step
+		if upload.Status == weed.Manifest {
+			err = upload.UploadManifest()
+			if err != nil {
+				return err
+			}
 		}
 	}
 

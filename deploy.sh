@@ -19,4 +19,4 @@ then
   docker-compose build $services
 fi
 
-docker-compose up -d $services
+docker-compose up -d $services && docker-compose restart nginx  # a trick to reset nginx hosts

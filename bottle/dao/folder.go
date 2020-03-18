@@ -29,6 +29,9 @@ func VirtualRoot() *FolderInfo {
 
 func GetFolderById(ownerId int64, id int64) (*FolderInfo, error) {
 	var folder FolderInfo
+	if id == RootId {
+		return VirtualRoot(), nil
+	}
 	if err := db.DB().Where("id = ? AND owner_id = ? AND status = ?", id, ownerId, db.Valid).First(&folder).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil

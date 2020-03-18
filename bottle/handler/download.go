@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/disintegration/imaging"
@@ -22,6 +23,35 @@ const DownloadTokenKey = "download:token=%s;user_id=%d"
 
 type DownloadHandler struct{}
 
+type DownloadURL struct {
+	Url string
+	Filename string
+}
+
+func (d *DownloadURL) Marshal() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	err := enc.Encode(*d)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (d *DownloadURL) Unmarshal(b []byte) error {
+	buf := bytes.NewReader(b)
+	dec := gob.NewDecoder(buf)
+
+	err := dec.Decode(d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (*DownloadHandler) CreateDownloadUrl(ctx context.Context, req *pb.CreateDownloadUrlRequest, resp *pb.CreateDownloadUrlResponse) error {
 	fileId := req.GetFileId()
 	ownerId := req.GetOwnerId()
@@ -35,14 +65,19 @@ func (*DownloadHandler) CreateDownloadUrl(ctx context.Context, req *pb.CreateDow
 	}
 
 	fid := file.Metadata.Fid
-	downloadUrl, err := weed.GetDownloadUrl(fid)
+	weedUrl, err := weed.GetDownloadUrl(fid)
 	if err != nil {
 		return err
 	}
 
+	downloadUrl := &DownloadURL{
+		Url:      weedUrl.String(),
+		Filename: file.Name,
+	}
+
 	token := util.GenToken(20)
-	if err := kv.C().Set(fmt.Sprintf(DownloadTokenKey, token, userId), downloadUrl.String(), 5*time.Minute).Err(); err != nil {
-		return common.NewRedisError(err)
+	if err := kv.SetM(fmt.Sprintf(DownloadTokenKey, token, userId), downloadUrl, 5*time.Minute); err != nil {
+		return err
 	}
 
 	resp.DownloadToken = token
@@ -53,12 +88,14 @@ func (*DownloadHandler) GetWeedDownloadUrl(ctx context.Context, req *pb.GetWeedD
 	token := req.GetDownloadToken()
 	userId := req.GetUserId()
 
-	res, err := kv.C().Get(fmt.Sprintf(DownloadTokenKey, token, userId)).Result()
+	downloadUrl := &DownloadURL{}
+	err := kv.GetM(fmt.Sprintf(DownloadTokenKey, token, userId), downloadUrl)
 	if err != nil {
-		return common.NewRedisError(err)
+		return err
 	}
 
-	resp.WeedUrl = res
+	resp.WeedUrl = downloadUrl.Url
+	resp.Filename = downloadUrl.Filename
 	return nil
 }
 

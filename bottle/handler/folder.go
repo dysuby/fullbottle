@@ -32,28 +32,24 @@ func (*FolderHandler) GetFolderInfo(ctx context.Context, req *pb.GetFolderInfoRe
 	switch req.GetIdent().(type) {
 	case *pb.GetFolderInfoRequest_FolderId:
 		folderId := req.GetFolderId()
-		if folderId == 0 || folderId == dao.RootId {
-			folder = dao.VirtualRoot()
-		} else {
-			folder, err = dao.GetFolderById(ownerId, req.GetFolderId())
+		if folderId == 0 {
+			folderId = dao.RootId
 		}
+		folder, err = dao.GetFolderById(ownerId, folderId)
 	case *pb.GetFolderInfoRequest_Path_:
 		path := req.GetPath()
 		base := path.GetBaseFolder()
 		names := util.SplitPath(path.GetRelative())
 
 		// determine base folder
-		var baseFolder *dao.FolderInfo
-		if base == 0 || base == dao.RootId {
-			baseFolder = dao.VirtualRoot()
-		} else {
-			f, err := dao.GetFolderById(ownerId, base)
-			if err != nil {
-				return err
-			} else if f == nil {
-				return errors.New(config.BottleSrvName, "Base folder not found", common.NotFoundError)
-			}
-			baseFolder = f
+		if base == 0 {
+			base = dao.RootId
+		}
+		baseFolder, err := dao.GetFolderById(ownerId, base)
+		if err != nil {
+			return err
+		} else if baseFolder == nil {
+			return errors.New(config.BottleSrvName, "Base folder not found", common.NotFoundError)
 		}
 
 		// if path is empty, then break
@@ -141,13 +137,11 @@ func (*FolderHandler) CreateFolder(ctx context.Context, req *pb.CreateFolderRequ
 	}
 	defer lock.Release()
 
-	if parentId != dao.RootId {
-		parent, err := dao.GetFolderById(ownerId, parentId)
-		if err != nil {
-			return err
-		} else if parent == nil {
-			return errors.New(config.BottleSrvName, "Parent folder not found", common.NotFoundError)
-		}
+	parent, err := dao.GetFolderById(ownerId, parentId)
+	if err != nil {
+		return err
+	} else if parent == nil {
+		return errors.New(config.BottleSrvName, "Parent folder not found", common.NotFoundError)
 	}
 
 	folders, err := dao.GetFoldersByParentId(ownerId, parentId, nil)
@@ -245,6 +239,10 @@ func (*FolderHandler) RemoveFolder(ctx context.Context, req *pb.RemoveFolderRequ
 		return err
 	}
 	defer lock.Release()
+
+	if folderId == dao.RootId  {
+		return errors.New(config.BottleSrvName, "Forbidden operation", common.BadArgError)
+	}
 
 	folder, err := dao.GetFolderById(ownerId, folderId)
 	if err != nil {

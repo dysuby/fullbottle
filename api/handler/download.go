@@ -62,7 +62,7 @@ func DownloadFile(c *gin.Context) {
 		return
 	}
 
-	util.DownloadProxy(c, resp.WeedUrl)
+	util.DownloadProxy(c, resp.WeedUrl, resp.Filename)
 }
 
 func GetImageThumbnail(c *gin.Context) {

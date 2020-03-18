@@ -2,14 +2,14 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 )
 
-func DownloadProxy(c *gin.Context, rawUrl string) {
+func DownloadProxy(c *gin.Context, rawUrl string, filename string) {
 	downloadUrl, err := url.Parse(rawUrl)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -24,8 +24,7 @@ func DownloadProxy(c *gin.Context, rawUrl string) {
 		},
 		ModifyResponse: func(r *http.Response) error {
 			// make it download
-			cd := r.Header.Get("Content-Disposition")
-			r.Header.Set("Content-Disposition", strings.Replace(cd, "inline;", "attachment;", 1))
+			r.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 			return nil
 		},
 	}

@@ -228,6 +228,7 @@ message GetWeedDownloadUrlRequest {
 
 message GetWeedDownloadUrlResponse {
     string weed_url = 1;
+    string filename = 2;
 }
 
 message GetImageThumbnailRequest {

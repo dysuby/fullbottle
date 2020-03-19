@@ -20,6 +20,7 @@ import (
 )
 
 const DownloadTokenKey = "download:token=%s;user_id=%d"
+const DownloadTokenCache = "download:user_id=%d;file_id=%d"
 
 type DownloadHandler struct{}
 
@@ -64,6 +65,12 @@ func (*DownloadHandler) CreateDownloadUrl(ctx context.Context, req *pb.CreateDow
 		return errors.New(config.BottleSrvName, "File not found", common.NotFoundError)
 	}
 
+	cacheKey := fmt.Sprintf(DownloadTokenCache, userId, file.ID)
+	if cache, _ := kv.C().Get(cacheKey).Result(); cache != "" {
+		resp.DownloadToken = cache
+		return nil
+	}
+
 	fid := file.Metadata.Fid
 	weedUrl, err := weed.GetDownloadUrl(fid)
 	if err != nil {
@@ -76,9 +83,11 @@ func (*DownloadHandler) CreateDownloadUrl(ctx context.Context, req *pb.CreateDow
 	}
 
 	token := util.GenToken(20)
-	if err := kv.SetM(fmt.Sprintf(DownloadTokenKey, token, userId), downloadUrl, 5*time.Minute); err != nil {
+	if err := kv.SetM(fmt.Sprintf(DownloadTokenKey, token, userId), downloadUrl, 24*time.Hour); err != nil {
 		return err
 	}
+
+	_ = kv.C().Set(cacheKey, token,  24*time.Hour)
 
 	resp.DownloadToken = token
 	return nil

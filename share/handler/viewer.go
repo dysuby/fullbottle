@@ -5,10 +5,12 @@ import (
 	"github.com/micro/go-micro/v2/errors"
 	pbbottle "github.com/vegchic/fullbottle/bottle/proto/bottle"
 	"github.com/vegchic/fullbottle/common"
+	"github.com/vegchic/fullbottle/common/db"
 	"github.com/vegchic/fullbottle/config"
 	"github.com/vegchic/fullbottle/share/dao"
 	pb "github.com/vegchic/fullbottle/share/proto/share"
 	"github.com/vegchic/fullbottle/share/service"
+	"time"
 )
 
 type ViewerHandler struct{}
@@ -27,6 +29,13 @@ func (*ViewerHandler) GetShareInfo(ctx context.Context, req *pb.GetShareInfoRequ
 		return errors.New(config.ShareSrvName, "Share not found", common.NotFoundError)
 	} else if req.GetToken() != info.Token {
 		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
+	}
+
+	if info.ExpireTime != nil && info.ExpireTime.Before(time.Now()) {
+		if err := dao.CancelShare(info, db.Expired); err != nil {
+			return err
+		}
+		return errors.New(config.ShareSrvName, "Share expired", common.NotFoundError)
 	}
 
 	metrics, err := dao.GetShareMetrics(info.ID)
@@ -69,6 +78,13 @@ func (*ViewerHandler) GetShareFolder(ctx context.Context, req *pb.GetShareFolder
 		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
 	}
 
+	if info.ExpireTime != nil && info.ExpireTime.Before(time.Now()) {
+		if err := dao.CancelShare(info, db.Expired); err != nil {
+			return err
+		}
+		return errors.New(config.ShareSrvName, "Share expired", common.NotFoundError)
+	}
+
 	folderResp, err := service.GetShareFolder(ctx, info, path)
 	if err != nil {
 		return err
@@ -98,6 +114,13 @@ func (*ViewerHandler) GetShareDownloadUrl(ctx context.Context, req *pb.GetShareD
 		return errors.New(config.ShareSrvName, "Share not found", common.NotFoundError)
 	} else if req.GetToken() != info.Token {
 		return errors.New(config.ShareSrvName, "Share doesn't match this token", common.BadArgError)
+	}
+
+	if info.ExpireTime != nil && info.ExpireTime.Before(time.Now()) {
+		if err := dao.CancelShare(info, db.Expired); err != nil {
+			return err
+		}
+		return errors.New(config.ShareSrvName, "Share expired", common.NotFoundError)
 	}
 
 	path := req.GetPath()
